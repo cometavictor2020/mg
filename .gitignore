@@ -1,0 +1,19 @@
+# Entornos virtuales
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Variables de entorno
+.env
+
+# Editor
+.vscode/
+
+# Archivos temporales de Office (bloqueo al abrir un documento)
+~$*
+
+# Dataset sintetico de prueba (157 MB, supera el limite de GitHub, no se respalda)
+datos/datos_vibracion_motor.csv

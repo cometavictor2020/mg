@@ -1,0 +1,60 @@
+.pestanas {
+  display: flex;
+  gap: 28px;
+
+  min-height: 38px;
+
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pestana {
+  position: relative;
+
+  padding: 8px 0 10px;
+
+  border: none;
+
+  background: transparent;
+
+  color: var(--color-texto-secundario);
+
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.pestana:hover {
+  color: var(--color-texto);
+}
+
+.pestana.activa {
+  color: var(--color-exito);
+}
+
+.pestana.activa::after {
+  content: "";
+
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+
+  height: 2px;
+
+  border-radius: 2px;
+
+  background: var(--color-exito);
+}
+
+@media (max-width: 900px) {
+  .pestanas {
+    gap: 20px;
+    overflow-x: auto;
+  }
+
+  .pestana {
+    flex-shrink: 0;
+  }
+}

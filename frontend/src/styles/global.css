@@ -1,0 +1,131 @@
+/* ==========================================================
+   RESET
+   ========================================================== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   HTML
+   ========================================================== */
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+/* ==========================================================
+   BODY
+   ========================================================== */
+
+body {
+  background: var(--color-fondo-principal);
+  color: var(--color-texto-principal);
+
+  font-family: var(--fuente-principal);
+  font-size: var(--texto-base);
+  line-height: var(--interlineado-normal);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+}
+
+/* ==========================================================
+   ROOT
+   ========================================================== */
+
+#root {
+  min-height: 100vh;
+}
+
+/* ==========================================================
+   ELEMENTOS GENERALES
+   ========================================================== */
+
+button {
+  font: inherit;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+
+  transition: var(--transicion-normal);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ==========================================================
+   TIPOGRAFÍA
+   ========================================================== */
+
+h1 {
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-bold);
+  line-height: var(--interlineado-ajustado);
+}
+
+h2 {
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-semibold);
+}
+
+h3 {
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-semibold);
+}
+
+p {
+  color: var(--color-texto-secundario);
+}
+
+/* ==========================================================
+   SCROLLBAR
+   ========================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-panel-secundario);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-borde);
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primario);
+}
+
+/* ==========================================================
+   SELECCIÓN DE TEXTO
+   ========================================================== */
+
+::selection {
+  background: var(--color-primario);
+  color: #ffffff;
+}
