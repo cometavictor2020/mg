@@ -6,8 +6,9 @@ venv/
 __pycache__/
 *.pyc
 
-# Variables de entorno
+# Variables de entorno (credenciales de base de datos, etc.)
 .env
+.env.*
 
 # Editor
 .vscode/
