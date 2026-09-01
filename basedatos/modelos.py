@@ -131,5 +131,6 @@ class Usuario(Base):
     id = Column(Integer, primary_key=True)
     nombre = Column(String(150), nullable=False)
     email = Column(String(150), nullable=False, unique=True)
+    password_hash = Column(String(255), nullable=False)
     rol = Column(String(30), default="visualizador")
     fecha_creacion = Column(DateTime, default=datetime.utcnow)

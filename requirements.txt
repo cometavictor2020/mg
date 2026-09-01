@@ -10,3 +10,5 @@ matplotlib==3.11.1
 SQLAlchemy==2.0.52
 PyMySQL==2.2.8
 python-dotenv==1.2.3
+bcrypt==5.0.0
+PyJWT==2.13.0
