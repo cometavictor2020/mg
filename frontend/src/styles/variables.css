@@ -55,6 +55,34 @@
   --color-linea-limite: #f3a712;
 
   /* =========================================
+     COLORES — LOGIN / RESUMEN GENERAL
+     (valores exactos tomados de mg-intro.png y
+     resumen-general.png, no reutilizar fuera de
+     esas dos pantallas para no alterar el resto
+     del diseño heredado)
+     ========================================= */
+
+  --mg-bg: #080c12;
+  --mg-bg-sidebar: #0a0f18;
+  --mg-bg-tarjeta: #0f1520;
+  --mg-borde: #1e2d3d;
+
+  --mg-teal: #00c9a7;
+  --mg-texto-titulo: #e2e8f0;
+  --mg-texto-muted: #64748b;
+  --mg-texto-muted-suave: #94a3b8;
+
+  --mg-verde: #22c55e;
+  --mg-ambar: #f59e0b;
+  --mg-rojo: #ef4444;
+  --mg-gris: #64748b;
+
+  --mg-verde-fondo: rgba(34, 197, 94, 0.12);
+  --mg-ambar-fondo: rgba(245, 158, 11, 0.12);
+  --mg-rojo-fondo: rgba(239, 68, 68, 0.12);
+  --mg-gris-fondo: rgba(100, 116, 139, 0.12);
+
+  /* =========================================
      TIPOGRAFÍA
      ========================================= */
 

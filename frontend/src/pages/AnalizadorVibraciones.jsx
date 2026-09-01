@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts"
 
+import Sidebar from "../components/Sidebar"
 import { dashboardDemo } from "../data/dashboardDemo"
 import { equiposDemo } from "../data/equiposDemo"
 
@@ -21,9 +22,14 @@ const ESTADISTICOS_VACIOS = {
   skewness: [],
 }
 
-function AnalizadorVibraciones() {
+function AnalizadorVibraciones({
+  sesion,
+  onCerrarSesion,
+  onIrAResumen,
+  equipoInicialId,
+}) {
   const [equipoSeleccionadoId, setEquipoSeleccionadoId] = useState(
-    equiposDemo[0]?.id ?? null
+    equipoInicialId ?? equiposDemo[0]?.id ?? null
   )
 
   const [pestanaActiva, setPestanaActiva] = useState("tiempo")
@@ -157,67 +163,21 @@ function AnalizadorVibraciones() {
     )
   }
 
+  const iniciales = sesion.usuario.nombre
+    .split(" ")
+    .map((parte) => parte[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <div className="logo-icon">◎</div>
-
-          <div>
-            <h1>{dashboardDemo.aplicacion.nombre}</h1>
-
-            <p>
-              {dashboardDemo.aplicacion.version} ·{" "}
-              {dashboardDemo.aplicacion.estado}
-            </p>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button type="button">Resumen General</button>
-
-          <button type="button">
-            <span>Alertas</span>
-
-            <span className="contador-alertas">
-              {dashboardDemo.navegacion.cantidadAlertas}
-            </span>
-          </button>
-
-          <button type="button">Reportes</button>
-
-          <button type="button">Configuración</button>
-        </nav>
-
-        <section className="sidebar-equipos">
-          <p className="sidebar-section-title">EQUIPOS</p>
-
-          {equiposDemo.map((equipo) => (
-            <button
-              key={equipo.id}
-              type="button"
-              className={`equipo ${
-                equipo.id === equipoSeleccionado.id
-                  ? "equipo-activo"
-                  : ""
-              }`}
-              onClick={() => seleccionarEquipo(equipo)}
-            >
-              <span
-                className={`estado-equipo estado-${equipo.estado}`}
-              />
-
-              <span className="equipo-texto">
-                <strong>{equipo.nombre}</strong>
-
-                <small>
-                  {equipo.id} · {equipo.potenciaKw} kW
-                </small>
-              </span>
-            </button>
-          ))}
-        </section>
-      </aside>
+      <Sidebar
+        vistaActiva="detalle"
+        onIrAResumen={onIrAResumen}
+        equipoActivoId={equipoSeleccionado.id}
+        onSeleccionarEquipo={seleccionarEquipo}
+      />
 
       <div className="main-area">
         <header className="topbar">
@@ -234,16 +194,22 @@ function AnalizadorVibraciones() {
               </span>
             )}
 
-            <div className="usuario-avatar">
-              {dashboardDemo.usuario.iniciales}
-            </div>
+            <div className="usuario-avatar">{iniciales}</div>
 
             <div className="usuario-info">
-              <strong>{dashboardDemo.usuario.nombre}</strong>
-              <small>{dashboardDemo.usuario.rol}</small>
+              <strong>{sesion.usuario.nombre}</strong>
+              <small>
+                {sesion.usuario.rol === "administrador"
+                  ? "Administrador"
+                  : sesion.usuario.rol}
+              </small>
             </div>
 
-            <button type="button" className="boton-salir">
+            <button
+              type="button"
+              className="boton-salir"
+              onClick={onCerrarSesion}
+            >
               SALIR
             </button>
           </div>

@@ -92,6 +92,27 @@
   color: white;
 }
 
+.nav-item-grupo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item-icono {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.nav-item-activo {
+  background: rgba(0, 201, 167, 0.12);
+  color: var(--color-primario);
+}
+
+.nav-item-activo:hover {
+  background: rgba(0, 201, 167, 0.16);
+  color: var(--color-primario);
+}
+
 .contador-alertas {
   background: var(--color-critico);
   color: white;

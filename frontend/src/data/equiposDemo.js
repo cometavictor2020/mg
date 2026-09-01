@@ -30,7 +30,14 @@ export const equiposDemo = [
     estado: "critico",
     descripcionEstado: "Estado crítico",
     ubicacion: "Planta principal",
+    ubicacionDetalle: "Sala de Máquinas — Nivel 1",
     ultimaMedicion: "Hace 12 segundos",
+
+    vibracionRms: 12.4,
+    temperatura: 84,
+    velNominal: 1480,
+    probabilidadFalla: 87,
+    diasFallaEstimada: 6,
 
     sensores: [
       {
@@ -53,7 +60,14 @@ export const equiposDemo = [
     estado: "advertencia",
     descripcionEstado: "Advertencia",
     ubicacion: "Sala de compresores",
+    ubicacionDetalle: "Sala Compresores — Nivel 2",
     ultimaMedicion: "Hace 25 segundos",
+
+    vibracionRms: 5.8,
+    temperatura: 71,
+    velNominal: 2960,
+    probabilidadFalla: 34,
+    diasFallaEstimada: 28,
 
     sensores: [
       {
@@ -76,7 +90,14 @@ export const equiposDemo = [
     estado: "normal",
     descripcionEstado: "Normal",
     ubicacion: "Torre de enfriamiento",
+    ubicacionDetalle: "Planta Exterior — Sector A",
     ultimaMedicion: "Hace 18 segundos",
+
+    vibracionRms: 2.1,
+    temperatura: 62,
+    velNominal: 1450,
+    probabilidadFalla: 8,
+    diasFallaEstimada: null,
 
     sensores: [
       {
@@ -99,7 +120,14 @@ export const equiposDemo = [
     estado: "normal",
     descripcionEstado: "Normal",
     ubicacion: "Línea de transporte",
+    ubicacionDetalle: "Línea de Producción — Sector B",
     ultimaMedicion: "Hace 31 segundos",
+
+    vibracionRms: 1.8,
+    temperatura: 58,
+    velNominal: 960,
+    probabilidadFalla: 5,
+    diasFallaEstimada: null,
 
     sensores: [
       {
@@ -122,7 +150,14 @@ export const equiposDemo = [
     estado: "advertencia",
     descripcionEstado: "Advertencia",
     ubicacion: "Sala de bombas",
+    ubicacionDetalle: "Sala de Máquinas — Nivel 1",
     ultimaMedicion: "Hace 42 segundos",
+
+    vibracionRms: 6.9,
+    temperatura: 76,
+    velNominal: 1480,
+    probabilidadFalla: 41,
+    diasFallaEstimada: 19,
 
     sensores: [
       {
@@ -143,9 +178,16 @@ export const equiposDemo = [
     tipo: "Motor eléctrico",
     potenciaKw: 15,
     estado: "inactivo",
-    descripcionEstado: "Inactivo",
+    descripcionEstado: "Fuera de línea",
     ubicacion: "Área de carga",
+    ubicacionDetalle: "Nave Industrial — Altura 8m",
     ultimaMedicion: "Sin datos recientes",
+
+    vibracionRms: null,
+    temperatura: null,
+    velNominal: 720,
+    probabilidadFalla: null,
+    diasFallaEstimada: null,
 
     sensores: [
       {
