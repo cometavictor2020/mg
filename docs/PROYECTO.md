@@ -1,6 +1,6 @@
 # PROYECTO.md — MotorGuardian
 
-**Última actualización:** 2026-09-01
+**Última actualización:** 2026-09-01 (v2)
 **Este es el único documento de lectura obligatoria al inicio de cada sesión.**
 Complementarlo con un vistazo a las últimas entradas de `BITACORA.md`. `ARQUITECTURA.md` y `CONOCIMIENTOS.md` se consultan solo cuando se necesitan (no son lectura obligatoria).
 
@@ -30,19 +30,23 @@ El núcleo (Core) del sistema se mantiene en **Python**.
 - Documentación consolidada de 11+ archivos redundantes a 4 documentos.
 - Repositorio respaldado en GitHub, privado: `github.com/cometavictor2020/mg` (historial local con fechas reales preservadas).
 - Base de datos **MySQL** instalada localmente (`motorguardian`, usuario dedicado `motorguardian_app`, credenciales en `.env` — nunca en Git), con las 8 tablas del modelo de dominio creadas (`tipo_equipo`, `planta`, `equipo`, `tipo_sensor`, `sensor`, `medicion`, `resultado_analisis`, `usuario`) vía `basedatos/modelos.py` (SQLAlchemy) y `herramientas/crear_tablas_basedatos.py`. MySQL corre como proceso manual (no como servicio de Windows — no había permisos de administrador para instalarlo como tal), se levanta con el comando en `CLAUDE.md`.
+- **Autenticación real** con la base de datos: tabla `usuario` con `password_hash` (bcrypt), módulo `seguridad/auth.py` (hash + JWT), endpoint `POST /api/auth/login`. Usuario demo sembrado con `herramientas/crear_usuario_demo.py` (`admin@motorguardian.io` / `mg2024`).
+- **Pantalla de Login** (`frontend/src/pages/Login.jsx`) y **Resumen General** (`frontend/src/pages/ResumenGeneral.jsx`), reproduciendo al 100% los colores y el formato de los mockups `mg-intro.png`/`resumen-general.png` (colores extraídos con precisión de píxel vía Python/Pillow, no a ojo). `App.jsx` actúa como enrutador simple entre Login → Resumen General → detalle de equipo, con sesión persistida en `localStorage`.
+- Sidebar extraído a un componente compartido (`frontend/src/components/Sidebar.jsx`) reutilizado por `ResumenGeneral` y `AnalizadorVibraciones`, evitando duplicar ese bloque de JSX.
 
 ### Deuda técnica conocida (heredada de la fusión, pendiente de corregir)
 
 - `backend/api/main.py` tiene hardcodeada la ruta del CSV y la frecuencia de muestreo.
 - `calcular_fft` y `calcular_estadisticos` exigen explícitamente columnas `vibracion_x/y/z`: no son genéricos para otros tipos de sensor.
-- El listado de equipos del sidebar (`equiposDemo.js`) es data dummy, **no conectado** al backend: seleccionar un equipo distinto no cambia los datos mostrados. Solo hay un equipo real con datos de verdad.
-- La base de datos MySQL existe con sus tablas creadas, pero **todavía no está conectada a la API**: no hay endpoints `/api/equipos` ni módulo web de ingreso de equipos. `equiposDemo.js` sigue siendo la única fuente del sidebar.
+- El listado de equipos (`equiposDemo.js`) sigue siendo data dummy, **no conectado** a la base de datos MySQL: el Resumen General y las tarjetas de equipo usan estadísticas inventadas, no mediciones reales. Solo hay un equipo con datos reales de vibración (vía `/api/datos`/`/api/fft`/`/api/estadisticos`), y es el mismo sin importar qué equipo se seleccione.
+- La base de datos MySQL tiene tablas de equipos/sensores creadas, pero **todavía no está conectada a la API**: no hay endpoints `/api/equipos` ni módulo web de ingreso de equipos.
+- El token JWT se guarda pero **no se valida todavía en el backend** — los endpoints existentes (`/api/datos`, `/api/fft`, `/api/estadisticos`) siguen siendo públicos, sin exigir sesión. Solo el acceso a la interfaz (frontend) queda protegido por el login.
 - No hay tests automatizados.
 - No hay mecanismo de respaldo definido para la base de datos (el desarrollador pidió explícitamente que no sea vía Git/GitHub — se definirá más adelante).
 
 ### Próximo paso sugerido
 
-Construir el módulo de ingreso de equipos: endpoints `/api/equipos` (JSON) que lean/escriban en la base de datos MySQL, y un formulario web en el frontend — esto reemplaza `equiposDemo.js` como fuente de verdad del sidebar.
+Construir el módulo de ingreso de equipos: endpoints `/api/equipos` (JSON) que lean/escriban en la base de datos MySQL, y un formulario web en el frontend — esto reemplaza `equiposDemo.js` como fuente de verdad, y de paso resuelve por qué todos los equipos muestran hoy los mismos datos reales.
 
 ---
 
@@ -71,6 +75,9 @@ Construir el módulo de ingreso de equipos: endpoints `/api/equipos` (JSON) que 
 - **D-021** — El esquema de base de datos usa catálogos abiertos (`tipo_equipo`, `tipo_sensor`) en vez de listas fijas, y un campo `atributos`/`configuracion` en JSON para datos específicos de cada tipo de equipo/sensor — para no acoplar el esquema a los tipos de equipo conocidos hoy (ver Objetivo del proyecto).
 - **D-022** — La base de datos MySQL **no se respalda vía Git/GitHub** bajo ninguna circunstancia (ni el archivo de datos ni un dump). El mecanismo de respaldo se definirá en una sesión futura.
 - **D-023** — MySQL corre como proceso manual iniciado por comando (no como servicio de Windows), porque instalarlo como servicio requiere permisos de administrador no disponibles en el entorno de desarrollo actual.
+- **D-024** — Autenticación con `bcrypt` (hash de contraseñas) + `PyJWT` (tokens de sesión), en un módulo `seguridad/` independiente de `backend/api/` — el endpoint solo orquesta, no contiene lógica de hashing/tokens (mismo principio que D-012).
+- **D-025** — Las pantallas de Login y Resumen General deben replicar exactamente los colores de los mockups entregados por el desarrollador; los colores se extrajeron con Python/Pillow directamente de los archivos PNG (valores de píxel exactos), no a partir de una estimación visual.
+- **D-026** — El sidebar se extrajo a un componente compartido (`components/Sidebar.jsx`) al empezar a reutilizarse en una segunda pantalla, siguiendo P-001 (una responsabilidad por módulo) sin alterar su apariencia original.
 
 ---
 
@@ -126,6 +133,7 @@ Construir el módulo de ingreso de equipos: endpoints `/api/equipos` (JSON) que 
 | 4 | Dashboard (React + Recharts, 5 pestañas de análisis) | Completado (con equipos dummy salvo uno real) |
 | 5 | Subida a AWS S3 | Completado en modo manual; automatización pendiente |
 | 6 | Base de datos MySQL: esquema de Equipo/Sensor/Medición/ResultadoAnalisis | Completado (esquema y tablas); conexión con la API pendiente |
+| 6.5 | Autenticación (login real contra la BD) + pantallas de Login y Resumen General | Completado (login funcional; JWT emitido pero aún no validado en los demás endpoints) |
 | 7 | Módulo web de ingreso de equipos: endpoints `/api/equipos` + formulario en el frontend, reemplazando `equiposDemo.js` | Pendiente — próximo paso sugerido |
 | 8 | Inteligencia Artificial: clasificación de fallas por picos FFT, switch de IA, LLM + normas ISO | Pendiente |
 | 9 | Autoencoders | Pendiente — despriorizado al final del roadmap (D-019), es lo que más tiempo de desarrollo consumiría |
@@ -142,5 +150,6 @@ Construir el módulo de ingreso de equipos: endpoints `/api/equipos` (JSON) que 
 - Conectar de verdad el selector de equipos del sidebar a datos reales por equipo (hoy es solo visual) — vía el nuevo módulo web de ingreso de equipos y la base de datos MySQL.
 - Sacar los hardcodeos de `main.py` (ruta del CSV, frecuencia de muestreo) hacia configuración.
 - Definir el mecanismo de respaldo de la base de datos MySQL (explícitamente no vía Git/GitHub).
+- Validar el token JWT en `/api/datos`, `/api/fft` y `/api/estadisticos` (hoy son públicos; solo la interfaz queda protegida por el login).
 
 ---

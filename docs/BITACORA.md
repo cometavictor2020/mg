@@ -46,3 +46,14 @@ Registro cronológico de avances. Es un log de solo-agregar: no se edita retroac
 - Se diseñó el esquema de base de datos (Equipo, Sensor, Medición, ResultadoAnalisis, catálogos abiertos TipoEquipo/TipoSensor, JSON para atributos específicos por tipo) y se decidió usar **MySQL** en vez de SQLite, por el requisito explícito de soportar múltiples usuarios desde ya (D-020).
 - Se instaló MySQL Server 8.4 localmente (vía winget), inicializado sin servicio de Windows (sin permisos de administrador disponibles) — corre como proceso manual. Se creó la base de datos `motorguardian`, un usuario dedicado `motorguardian_app` (no root), y las 8 tablas del esquema vía `basedatos/modelos.py` (SQLAlchemy) y `herramientas/crear_tablas_basedatos.py`. Credenciales guardadas en `.env` (gitignored).
 - Pendiente explícito: conectar la base de datos a la API (endpoints `/api/equipos`) y el formulario web de ingreso de equipos; definir el mecanismo de respaldo de la base de datos (nunca vía Git/GitHub).
+- Se estableció como regla permanente (agregada a `CLAUDE.md`): git es siempre manual (el desarrollador ejecuta los comandos que se le indican, nunca la IA), y nada se sube a GitHub sin una orden explícita en la misma sesión.
+
+## 2026-09-01 (continuación) — Autenticación, Login y Resumen General
+
+- Se agregó `password_hash` a la tabla `usuario` (vía `ALTER TABLE`, sin destruir la tabla existente) y el módulo `seguridad/auth.py` (hash de contraseñas con bcrypt, tokens de sesión con PyJWT, `SECRET_KEY` en `.env`).
+- Se agregó el endpoint `POST /api/auth/login` y la herramienta `herramientas/crear_usuario_demo.py`, que sembró el usuario `admin@motorguardian.io` / `mg2024` (Carlos Mendoza, administrador).
+- Se construyeron dos pantallas nuevas replicando exactamente los mockups entregados por el desarrollador (`mg-intro.png` y `resumen-general.png`): `Login.jsx` y `ResumenGeneral.jsx`. Los colores se extrajeron con Python/Pillow directamente de los píxeles de los PNG (no a ojo), incluyendo un análisis de frecuencia de colores y escaneos de líneas para separar con precisión fondo de página, fondo de tarjeta y colores de estado (verde/ámbar/rojo/gris).
+- Se extrajo el sidebar a un componente compartido (`components/Sidebar.jsx`), reutilizado por `ResumenGeneral` y por `AnalizadorVibraciones` (que se adaptó para recibir la sesión real y navegar de vuelta a Resumen General), sin alterar la apariencia heredada.
+- `App.jsx` pasó a ser un enrutador simple: Login → Resumen General → detalle de equipo, con la sesión persistida en `localStorage`.
+- Verificado end-to-end en el navegador: login exitoso, login con credenciales incorrectas (mensaje de error visible), navegación equipo → detalle → volver a Resumen General, y cierre de sesión.
+- Pendiente explícito: los endpoints `/api/datos`, `/api/fft` y `/api/estadisticos` todavía no validan el token JWT (quedan públicos); `equiposDemo.js` sigue siendo data dummy, no conectada a la base de datos.

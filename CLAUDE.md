@@ -56,3 +56,10 @@ cd C:\Users\comet\Documents\mg
 .\venv\Scripts\Activate.ps1
 python herramientas\crear_tablas_basedatos.py
 ```
+
+Crear/actualizar el usuario demo (login: `admin@motorguardian.io` / `mg2024`):
+```powershell
+cd C:\Users\comet\Documents\mg
+.\venv\Scripts\Activate.ps1
+python herramientas\crear_usuario_demo.py
+```

@@ -1,6 +1,6 @@
 # ARQUITECTURA.md — MotorGuardian
 
-**Última actualización:** 2026-09-01
+**Última actualización:** 2026-09-01 (v2)
 Consulta bajo demanda — no es lectura obligatoria al inicio de sesión (ver `PROYECTO.md`).
 
 Diagrama visual: [`docs/arquitectura_servidores.png`](arquitectura_servidores.png) (regenerable con `herramientas/generar_diagrama_arquitectura.py`).
@@ -14,6 +14,7 @@ Diagrama visual: [`docs/arquitectura_servidores.png`](arquitectura_servidores.pn
 - Recharts
 - AWS S3 (boto3)
 - MySQL (SQLAlchemy + PyMySQL) — base de datos de equipos/sensores
+- bcrypt + PyJWT — autenticación (hash de contraseñas + tokens de sesión)
 
 ---
 
@@ -35,14 +36,21 @@ mg/
                                  TipoSensor, Sensor, Medicion, ResultadoAnalisis, Usuario
     conexion.py                → engine/sesion de SQLAlchemy, credenciales desde .env
   config/aws.yaml            → bucket, región, ruta raíz de storage
+  seguridad/
+    auth.py                   → hash de contrasenas (bcrypt) + tokens JWT
   herramientas/
     subir_archivo_s3.py      → subida manual a S3 (acceso comentado)
     generar_diagrama_arquitectura.py
     crear_tablas_basedatos.py → crea/actualiza las tablas de MySQL
+    crear_usuario_demo.py     → siembra el usuario admin@motorguardian.io
   datos/                     → CSV de prueba
   frontend/                  → React + Vite (puerto 5173)
+    src/pages/Login.jsx           → pantalla de acceso (mg-intro.png)
+    src/pages/ResumenGeneral.jsx  → pantalla inicial tras login (resumen-general.png)
+    src/pages/AnalizadorVibraciones.jsx → detalle de un equipo (tiempo/FFT/estadisticos)
+    src/components/Sidebar.jsx    → sidebar compartido entre ResumenGeneral y AnalizadorVibraciones
   docs/                      → PROYECTO.md, ARQUITECTURA.md, BITACORA.md, CONOCIMIENTOS.md
-  .env                       → credenciales de MySQL (gitignored, nunca en el repo)
+  .env                       → credenciales de MySQL + SECRET_KEY del JWT (gitignored, nunca en el repo)
   requirements.txt
   venv/
 ```
@@ -96,7 +104,17 @@ Tablas (`basedatos/modelos.py`):
 | `resultado_analisis` | Resultado ya calculado sobre una medición (FFT, curtosis, clasificación de falla, score de autoencoder futuro), en JSON. |
 | `usuario` | Cuentas de usuario del sistema (autenticación real: pendiente de diseñar). |
 
-Estado actual: el esquema y las tablas existen y están probadas, pero **la API todavía no las usa** — no hay endpoints `/api/equipos` ni un módulo web de ingreso. Ver "Próximo paso sugerido" en `PROYECTO.md`.
+Estado actual: el esquema y las tablas existen y están probadas, pero **la API todavía no las usa** para equipos/sensores — no hay endpoints `/api/equipos` ni un módulo web de ingreso. La tabla `usuario` sí está en uso (ver Autenticación). Ver "Próximo paso sugerido" en `PROYECTO.md`.
+
+---
+
+## Autenticación
+
+Flujo: React (`Login.jsx`) → `POST /api/auth/login` (email + password) → FastAPI consulta `usuario` en MySQL → `seguridad/auth.py` verifica el hash bcrypt → si es válido, se firma un JWT (`SECRET_KEY` en `.env`, expira en 8 horas) → el frontend guarda `{access_token, usuario}` en `localStorage` y lo mantiene entre recargas.
+
+Estado actual: el login es real (contra la base de datos, contraseña hasheada, nunca en texto plano). El token protege el **acceso a la interfaz** (sin sesión guardada, `App.jsx` siempre muestra `Login`), pero los endpoints existentes (`/api/datos`, `/api/fft`, `/api/estadisticos`) todavía no exigen ni validan ese token — quedó anotado como pendiente en `PROYECTO.md`.
+
+Usuario de prueba: `admin@motorguardian.io` / `mg2024` (creado con `herramientas/crear_usuario_demo.py`).
 
 ---
 
