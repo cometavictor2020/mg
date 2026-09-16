@@ -36,7 +36,30 @@ function Login({ onLoginExitoso }) {
       <section className="login-panel-izquierdo">
         <div>
           <div className="login-marca">
-            <div className="login-logo-icon">◎</div>
+            <svg
+              className="login-logo-icon"
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+            >
+              <rect width="32" height="32" rx="4" fill="#00c9a7" fillOpacity="0.12" />
+              <circle cx="16" cy="16" r="6" stroke="#00c9a7" strokeWidth="1.5" fill="none" />
+              <circle cx="16" cy="16" r="2.5" fill="#00c9a7" />
+              <path
+                d="M16 4v4M16 24v4M4 16h4M24 16h4"
+                stroke="#00c9a7"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M8.22 8.22l2.83 2.83M20.95 20.95l2.83 2.83M23.78 8.22l-2.83 2.83M11.05 20.95l-2.83 2.83"
+                stroke="#00c9a7"
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.5"
+              />
+            </svg>
             <span className="login-marca-nombre">MotorGuardian</span>
           </div>
 

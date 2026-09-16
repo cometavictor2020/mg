@@ -9,6 +9,7 @@
 
 .login-panel-izquierdo {
   position: relative;
+  overflow: hidden;
 
   display: flex;
   flex-direction: column;
@@ -18,13 +19,33 @@
 
   border-right: 1px solid var(--mg-borde);
 
+  background: linear-gradient(160deg, #0f1c2e 0%, var(--mg-bg) 60%);
+}
+
+.login-panel-izquierdo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
   background-image:
-    linear-gradient(var(--mg-borde) 1px, transparent 1px),
-    linear-gradient(90deg, var(--mg-borde) 1px, transparent 1px);
-  background-size: 42px 42px;
+    linear-gradient(var(--mg-teal) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mg-teal) 1px, transparent 1px);
+  background-size: 40px 40px;
   background-position: top left;
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent 65%);
-  mask-image: linear-gradient(to bottom, black, transparent 65%);
+  opacity: 0.04;
+}
+
+.login-panel-izquierdo::after {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: -80px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+
+  background: radial-gradient(circle, var(--mg-teal) 0%, transparent 70%);
+  opacity: 0.1;
 }
 
 .login-panel-izquierdo > * {
@@ -41,27 +62,14 @@
 }
 
 .login-logo-icon {
-  width: 40px;
-  height: 40px;
   flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background: var(--mg-teal);
-  color: #07111f;
-
-  font-size: 19px;
-  font-weight: bold;
 }
 
 .login-marca-nombre {
   color: var(--mg-teal);
   font-size: 1.35rem;
   font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 .login-etiqueta {
@@ -78,9 +86,9 @@
   margin: 0 0 22px;
 
   color: var(--mg-texto-titulo);
-  font-size: clamp(1.9rem, 2.6vw, 2.5rem);
-  line-height: 1.2;
-  font-weight: 600;
+  font-size: clamp(1.9rem, 2.6vw, 2.25rem);
+  line-height: 1.25;
+  font-weight: 700;
 }
 
 .login-descripcion {
@@ -135,8 +143,8 @@
   margin: 0 0 6px;
 
   color: var(--mg-texto-titulo);
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .login-subtitulo {
@@ -169,7 +177,7 @@
   padding: 13px 16px;
 
   border: 1px solid var(--mg-borde);
-  border-radius: 8px;
+  border-radius: 4px;
 
   background: var(--mg-bg-tarjeta);
   color: var(--mg-texto-titulo);
@@ -198,7 +206,7 @@
 
   padding: 15px;
 
-  border-radius: 8px;
+  border-radius: 4px;
 
   background: var(--mg-teal);
   color: #07111f;
