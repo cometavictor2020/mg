@@ -1,6 +1,6 @@
 # ARQUITECTURA.md — MotorGuardian
 
-**Última actualización:** 2026-09-01 (v2)
+**Última actualización:** 2026-09-01 (v3)
 Consulta bajo demanda — no es lectura obligatoria al inicio de sesión (ver `PROYECTO.md`).
 
 Diagrama visual: [`docs/arquitectura_servidores.png`](arquitectura_servidores.png) (regenerable con `herramientas/generar_diagrama_arquitectura.py`).
@@ -38,6 +38,11 @@ mg/
   config/aws.yaml            → bucket, región, ruta raíz de storage
   seguridad/
     auth.py                   → hash de contrasenas (bcrypt) + tokens JWT
+  backend/api/administracion/
+    usuarios.py                → CRUD /api/usuarios
+    equipos.py                  → CRUD /api/equipos
+    sensores.py                  → CRUD /api/sensores
+    modelos_ml.py                 → CRUD /api/modelos-ml (solo metadata)
   herramientas/
     subir_archivo_s3.py      → subida manual a S3 (acceso comentado)
     generar_diagrama_arquitectura.py
@@ -48,7 +53,8 @@ mg/
     src/pages/Login.jsx           → pantalla de acceso (mg-intro.png)
     src/pages/ResumenGeneral.jsx  → pantalla inicial tras login (resumen-general.png)
     src/pages/AnalizadorVibraciones.jsx → detalle de un equipo (tiempo/FFT/estadisticos)
-    src/components/Sidebar.jsx    → sidebar compartido entre ResumenGeneral y AnalizadorVibraciones
+    src/pages/Configuracion.jsx   → administracion (Usuarios/Equipos/Sensores/Modelos), CRUD real
+    src/components/Sidebar.jsx    → sidebar compartido entre las 3 paginas autenticadas
   docs/                      → PROYECTO.md, ARQUITECTURA.md, BITACORA.md, CONOCIMIENTOS.md
   .env                       → credenciales de MySQL + SECRET_KEY del JWT (gitignored, nunca en el repo)
   requirements.txt
@@ -102,7 +108,8 @@ Tablas (`basedatos/modelos.py`):
 | `sensor` | Sensor instalado en un equipo. Campo `configuracion` (JSON) para detalles específicos (ejes, unidad de medida). |
 | `medicion` | Una sesión de captura de datos crudos: apunta a `ruta_archivo_local` / `clave_s3`, no contiene las muestras. |
 | `resultado_analisis` | Resultado ya calculado sobre una medición (FFT, curtosis, clasificación de falla, score de autoencoder futuro), en JSON. |
-| `usuario` | Cuentas de usuario del sistema (autenticación real: pendiente de diseñar). |
+| `usuario` | Cuentas de usuario del sistema. Administrable desde Configuración → Usuarios. |
+| `modelo` | Catálogo de modelos de aprendizaje (nombre, tipo, versión, estado, descripción) — solo metadata, no entrena ni ejecuta inferencia (D-027). Administrable desde Configuración → Modelos de Aprendizaje. |
 
 Estado actual: el esquema y las tablas existen y están probadas, pero **la API todavía no las usa** para equipos/sensores — no hay endpoints `/api/equipos` ni un módulo web de ingreso. La tabla `usuario` sí está en uso (ver Autenticación). Ver "Próximo paso sugerido" en `PROYECTO.md`.
 
@@ -133,5 +140,6 @@ Usuario de prueba: `admin@motorguardian.io` / `mg2024` (creado con `herramientas
 - `main.py` tiene hardcodeados la ruta del CSV y la frecuencia de muestreo.
 - `calcular_fft` y `calcular_estadisticos` requieren explícitamente columnas `vibracion_x/y/z` — no son genéricos todavía para otros tipos de sensor.
 - El sidebar de equipos del frontend usa datos dummy no conectados al backend.
-- La base de datos MySQL existe pero aún no está conectada a la API — cada request de `/api/datos`/`/api/fft`/`/api/estadisticos` sigue releyendo el CSV desde disco; no hay persistencia de resultados procesados todavía.
+- Dos fuentes de datos de equipos separadas y no conectadas entre sí: `equiposDemo.js` (dummy, alimenta el sidebar/Resumen General/detalle) y la base de datos MySQL real (alimenta Configuración → Equipos). Un equipo creado en Configuración no aparece en el resto de la app.
+- Cada request de `/api/datos`/`/api/fft`/`/api/estadisticos` sigue releyendo el CSV desde disco; no hay persistencia de resultados procesados todavía (la tabla `resultado_analisis` existe pero no se usa).
 - MySQL no arranca solo con el sistema (no es un servicio de Windows) — hay que iniciarlo manualmente cada sesión.

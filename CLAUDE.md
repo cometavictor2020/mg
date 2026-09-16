@@ -13,7 +13,7 @@ Proyecto de mantenimiento predictivo (Python + FastAPI + React/Vite + AWS S3 + M
 - **Nunca modificar** archivos dentro de `C:\Users\comet\Documents\analizador_vibraciones` ni `C:\Users\comet\Documents\motorguardian`. Son los proyectos originales, ya fusionados en `mg/`; quedan como archivo histórico, solo lectura.
 - El acceso real a AWS S3 se mantiene **manual**: la llamada de subida en `herramientas/subir_archivo_s3.py` permanece comentada salvo que el usuario pida explícitamente activarla.
 - No hardcodear plantas, motores, sensores, fechas o archivos fuera de `herramientas/` (ver D-011 en `PROYECTO.md`).
-- La base de datos MySQL **nunca se respalda vía Git/GitHub** (ni el archivo de datos ni un dump) — el mecanismo de respaldo se define en una sesión futura (D-022).
+- La base de datos MySQL **nunca se respalda vía Git/GitHub** (ni el archivo de datos ni un dump) — se respalda con `herramientas/respaldar_basedatos.py`, que guarda el volcado en `respaldos/` (excluida de Git) (D-022, D-033).
 - El repositorio en GitHub es **privado** y así debe seguir; el acceso se otorga agregando colaboradores puntuales, nunca haciéndolo público (D-018).
 - **Git es siempre manual**: nunca ejecutar `git add`/`git commit`/`git push` (ni ningún otro comando de git) directamente. Se indican los pasos, el desarrollador los ejecuta él mismo — es una decisión explícita para ganar soltura con git, no una limitación técnica.
 - **Nunca subir nada a GitHub** (`git push`, crear/modificar repos, colaboradores, etc.) sin una orden explícita del desarrollador en esa misma sesión. El control de qué sube y qué no sube es siempre suyo.
@@ -62,4 +62,11 @@ Crear/actualizar el usuario demo (login: `admin@motorguardian.io` / `mg2024`):
 cd C:\Users\comet\Documents\mg
 .\venv\Scripts\Activate.ps1
 python herramientas\crear_usuario_demo.py
+```
+
+Respaldar la base de datos (volcado a `respaldos/`, excluida de Git):
+```powershell
+cd C:\Users\comet\Documents\mg
+.\venv\Scripts\Activate.ps1
+python herramientas\respaldar_basedatos.py
 ```

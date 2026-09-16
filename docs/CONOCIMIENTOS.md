@@ -85,6 +85,12 @@ Separar código fuente, herramientas auxiliares y pruebas automatizadas en carpe
 
 Generar diagramas técnicos (PNG de alta resolución) con un script versionado (matplotlib) en vez de una imagen estática editada a mano, permite regenerarlos cuando la arquitectura cambie sin depender de rehacerlos manualmente. Ver `herramientas/generar_diagrama_arquitectura.py`.
 
+## C-017 — `uvicorn --reload` puede dejar procesos huérfanos en Windows
+
+Con `--reload`, `uvicorn` levanta un proceso supervisor y un proceso hijo (vía `multiprocessing`) que es el que realmente escucha el puerto. Si se termina solo el proceso padre (por ejemplo, cerrando la ventana o con `Stop-Process` sobre el PID equivocado), el hijo puede seguir vivo y ocupando el puerto — el siguiente intento de levantar el backend falla con `[Errno 10048] address already in use`, aunque `Get-Process` no muestre nada raro a simple vista.
+
+Para diagnosticarlo: `Get-CimInstance Win32_Process -Filter "Name = 'python.exe'"` mostrando `CommandLine` y `ParentProcessId` — el hijo aparece con `-c "from multiprocessing.spawn import spawn_main..."` y el PID del padre. Hay que terminar el hijo (y el padre si sigue vivo), no asumir que matar uno basta.
+
 ---
 
 # Reflexión
