@@ -3,8 +3,8 @@ import { useEffect, useState } from "react"
 import Login from "./pages/Login"
 import ResumenGeneral from "./pages/ResumenGeneral"
 import AnalizadorVibraciones from "./pages/AnalizadorVibraciones"
-
-const CLAVE_SESION = "motorguardian_sesion"
+import Configuracion from "./pages/Configuracion"
+import { obtenerSesion, guardarSesion, borrarSesion } from "./utils/sesion"
 
 function App() {
   const [sesion, setSesion] = useState(null)
@@ -13,27 +13,18 @@ function App() {
   const [equipoDetalleId, setEquipoDetalleId] = useState(null)
 
   useEffect(() => {
-    const guardada = localStorage.getItem(CLAVE_SESION)
-
-    if (guardada) {
-      try {
-        setSesion(JSON.parse(guardada))
-      } catch {
-        localStorage.removeItem(CLAVE_SESION)
-      }
-    }
-
+    setSesion(obtenerSesion())
     setCargandoSesion(false)
   }, [])
 
   function manejarLoginExitoso(datosSesion) {
-    localStorage.setItem(CLAVE_SESION, JSON.stringify(datosSesion))
+    guardarSesion(datosSesion)
     setSesion(datosSesion)
     setVista("resumen")
   }
 
   function cerrarSesion() {
-    localStorage.removeItem(CLAVE_SESION)
+    borrarSesion()
     setSesion(null)
     setVista("resumen")
     setEquipoDetalleId(null)
@@ -46,6 +37,10 @@ function App() {
 
   function irAResumen() {
     setVista("resumen")
+  }
+
+  function irAConfiguracion() {
+    setVista("configuracion")
   }
 
   if (cargandoSesion) {
@@ -62,7 +57,19 @@ function App() {
         sesion={sesion}
         onCerrarSesion={cerrarSesion}
         onIrAResumen={irAResumen}
+        onIrAConfiguracion={irAConfiguracion}
         equipoInicialId={equipoDetalleId}
+      />
+    )
+  }
+
+  if (vista === "configuracion") {
+    return (
+      <Configuracion
+        sesion={sesion}
+        onCerrarSesion={cerrarSesion}
+        onIrAResumen={irAResumen}
+        onSeleccionarEquipo={irADetalleEquipo}
       />
     )
   }
@@ -72,6 +79,7 @@ function App() {
       sesion={sesion}
       onCerrarSesion={cerrarSesion}
       onSeleccionarEquipo={irADetalleEquipo}
+      onIrAConfiguracion={irAConfiguracion}
     />
   )
 }

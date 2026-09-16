@@ -13,6 +13,7 @@ from pathlib import Path
 import bcrypt
 import jwt
 from dotenv import load_dotenv
+from fastapi import Header, HTTPException
 
 RUTA_PROYECTO = Path(__file__).parent.parent
 load_dotenv(RUTA_PROYECTO / ".env")
@@ -41,3 +42,22 @@ def verificar_token(token):
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITMO])
     except jwt.PyJWTError:
         return None
+
+
+def obtener_usuario_actual(authorization: str = Header(default=None)):
+    """
+    Dependencia de FastAPI: exige un token JWT valido en el header
+    Authorization ("Bearer <token>"). Los endpoints protegidos la
+    declaran con Depends(obtener_usuario_actual) - ellos no contienen
+    la logica de verificacion, solo la orquestan (mismo principio que
+    D-012/D-024).
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    payload = verificar_token(authorization.removeprefix("Bearer "))
+
+    if not payload:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    return payload
