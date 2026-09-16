@@ -1,0 +1,167 @@
+.config-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.config-nota {
+  margin: 0;
+  padding: 10px 14px;
+
+  border-radius: 8px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+
+  color: var(--color-texto-secundario);
+  font-size: 0.78rem;
+}
+
+.config-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+
+  padding: 16px;
+
+  border-radius: 9px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel-secundario);
+}
+
+.config-form-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  min-width: 160px;
+  flex: 1 1 160px;
+}
+
+.config-form-campo-ancho {
+  flex-basis: 100%;
+}
+
+.config-form-campo label {
+  color: var(--color-texto-secundario);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.config-form-campo input,
+.config-form-campo select,
+.config-form-campo textarea {
+  padding: 9px 11px;
+
+  border-radius: 7px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-tarjeta);
+  color: var(--color-texto-principal);
+
+  font-size: 0.85rem;
+}
+
+.config-form-campo input:focus,
+.config-form-campo select:focus,
+.config-form-campo textarea:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.config-form-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.config-boton-primario {
+  padding: 9px 16px;
+
+  border-radius: 7px;
+
+  background: var(--color-primario);
+  color: #07111f;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.config-boton-primario:hover {
+  background: var(--color-primario-hover);
+}
+
+.config-boton-secundario {
+  padding: 9px 16px;
+
+  border-radius: 7px;
+  border: var(--borde-suave);
+
+  color: var(--color-texto-secundario);
+
+  font-size: 0.82rem;
+}
+
+.config-boton-secundario:hover {
+  color: white;
+}
+
+.config-mensaje {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 0.8rem;
+}
+
+.config-error {
+  margin: 0;
+  color: var(--color-critico);
+  font-size: 0.8rem;
+}
+
+.config-tabla {
+  width: 100%;
+  border-collapse: collapse;
+
+  font-size: 0.82rem;
+}
+
+.config-tabla th {
+  padding: 8px 10px;
+
+  border-bottom: 1px solid var(--color-borde);
+
+  color: var(--color-texto-terciario);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.config-tabla td {
+  padding: 10px;
+
+  border-bottom: 1px solid var(--color-borde-suave);
+
+  color: var(--color-texto-principal);
+}
+
+.config-tabla tbody tr:hover {
+  background: var(--color-panel);
+}
+
+.config-tabla-acciones {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.config-tabla-acciones button {
+  color: var(--color-texto-secundario);
+  font-size: 0.78rem;
+  text-decoration: underline;
+}
+
+.config-tabla-acciones button:hover {
+  color: var(--color-primario);
+}

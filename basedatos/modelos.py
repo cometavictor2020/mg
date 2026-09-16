@@ -134,3 +134,23 @@ class Usuario(Base):
     password_hash = Column(String(255), nullable=False)
     rol = Column(String(30), default="visualizador")
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+
+class Modelo(Base):
+    """
+    Registro de un modelo de aprendizaje (metadata unicamente).
+
+    No entrena ni ejecuta inferencia todavia - eso queda para cuando
+    se aborde la Fase 9 del roadmap (autoencoders), despriorizada por D-019.
+    Esta tabla solo cataloga que modelos existen/estan planificados.
+    """
+
+    __tablename__ = "modelo"
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(150), nullable=False)
+    tipo = Column(String(80), nullable=False)
+    version = Column(String(30), default="0.1")
+    estado = Column(String(30), default="planificado")
+    descripcion = Column(Text)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
