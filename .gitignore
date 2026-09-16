@@ -12,9 +12,13 @@ __pycache__/
 
 # Editor
 .vscode/
+.claude/
 
 # Archivos temporales de Office (bloqueo al abrir un documento)
 ~$*
 
 # Dataset sintetico de prueba (157 MB, supera el limite de GitHub, no se respalda)
 datos/datos_vibracion_motor.csv
+
+# Respaldos de la base de datos (D-022: nunca via Git/GitHub)
+respaldos/
