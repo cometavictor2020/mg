@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 
 import Sidebar from "../components/Sidebar"
-import { equiposDemo } from "../data/equiposDemo"
+import { useEquiposReales } from "../hooks/useEquiposReales"
 
 const ETIQUETA_ESTADO = {
   critico: "CRÍTICO",
@@ -91,18 +91,20 @@ function TarjetaEquipo({ equipo, onSeleccionar }) {
   )
 }
 
-function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo }) {
+function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConfiguracion }) {
+  const { equipos, cargando, error } = useEquiposReales()
+
   const conteos = useMemo(() => {
     const base = { critico: 0, advertencia: 0, normal: 0, inactivo: 0 }
 
-    equiposDemo.forEach((equipo) => {
+    equipos.forEach((equipo) => {
       base[equipo.estado] += 1
     })
 
     return base
-  }, [])
+  }, [equipos])
 
-  const totalEquipos = equiposDemo.length
+  const totalEquipos = equipos.length
   const equiposActivos = totalEquipos - conteos.inactivo
 
   const segmentos = [
@@ -124,6 +126,7 @@ function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo }) {
       <Sidebar
         vistaActiva="resumen"
         onIrAResumen={() => {}}
+        onIrAConfiguracion={onIrAConfiguracion}
         equipoActivoId={null}
         onSeleccionarEquipo={onSeleccionarEquipo}
       />
@@ -160,90 +163,108 @@ function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo }) {
         </header>
 
         <main className="dashboard-content">
-          <section className="kpis-resumen">
-            <article className="kpi-tarjeta">
-              <span>TOTAL EQUIPOS</span>
+          {cargando && <p className="seccion-titulo">Cargando equipos…</p>}
+
+          {!cargando && error && <p className="login-error">{error}</p>}
+
+          {!cargando && !error && totalEquipos === 0 && (
+            <section className="tarjeta">
+              <h1>No hay equipos registrados</h1>
               <p>
-                <strong>{totalEquipos}</strong> motores
+                Crea el primer equipo en Configuración → Equipos para
+                empezar a monitorearlo.
               </p>
-            </article>
+            </section>
+          )}
 
-            <article className="kpi-tarjeta">
-              <span>ESTADO CRÍTICO</span>
-              <p>
-                <strong className="texto-rojo">{conteos.critico}</strong>{" "}
-                equipos
-              </p>
-            </article>
+          {!cargando && !error && totalEquipos > 0 && (
+            <>
+              <section className="kpis-resumen">
+                <article className="kpi-tarjeta">
+                  <span>TOTAL EQUIPOS</span>
+                  <p>
+                    <strong>{totalEquipos}</strong> motores
+                  </p>
+                </article>
 
-            <article className="kpi-tarjeta">
-              <span>ADVERTENCIAS</span>
-              <p>
-                <strong className="texto-ambar">
-                  {conteos.advertencia}
-                </strong>{" "}
-                equipos
-              </p>
-            </article>
+                <article className="kpi-tarjeta">
+                  <span>ESTADO CRÍTICO</span>
+                  <p>
+                    <strong className="texto-rojo">{conteos.critico}</strong>{" "}
+                    equipos
+                  </p>
+                </article>
 
-            <article className="kpi-tarjeta">
-              <span>OPERANDO NORMAL</span>
-              <p>
-                <strong className="texto-verde">{conteos.normal}</strong>{" "}
-                equipos
-              </p>
-            </article>
-          </section>
+                <article className="kpi-tarjeta">
+                  <span>ADVERTENCIAS</span>
+                  <p>
+                    <strong className="texto-ambar">
+                      {conteos.advertencia}
+                    </strong>{" "}
+                    equipos
+                  </p>
+                </article>
 
-          <section className="tarjeta salud-flota">
-            <div className="salud-flota-encabezado">
-              <span>SALUD DE FLOTA</span>
-              <span className="salud-flota-activos">
-                {equiposActivos} equipos activos
-              </span>
-            </div>
+                <article className="kpi-tarjeta">
+                  <span>OPERANDO NORMAL</span>
+                  <p>
+                    <strong className="texto-verde">{conteos.normal}</strong>{" "}
+                    equipos
+                  </p>
+                </article>
+              </section>
 
-            <div className="salud-flota-barra">
-              {segmentos.map((segmento) => (
-                <div
-                  key={segmento.estado}
-                  className={`salud-flota-segmento fondo-${segmento.color}`}
-                  style={{
-                    width: `${(segmento.cantidad / totalEquipos) * 100}%`,
-                  }}
-                />
-              ))}
-            </div>
+              <section className="tarjeta salud-flota">
+                <div className="salud-flota-encabezado">
+                  <span>SALUD DE FLOTA</span>
+                  <span className="salud-flota-activos">
+                    {equiposActivos} equipos activos
+                  </span>
+                </div>
 
-            <div className="salud-flota-leyenda">
-              <span>
-                <i className="punto-leyenda fondo-verde" /> NORMAL
-              </span>
-              <span>
-                <i className="punto-leyenda fondo-ambar" /> ADVERTENCIA
-              </span>
-              <span>
-                <i className="punto-leyenda fondo-rojo" /> CRÍTICO
-              </span>
-              <span>
-                <i className="punto-leyenda fondo-gris" /> FUERA DE LÍNEA
-              </span>
-            </div>
-          </section>
+                <div className="salud-flota-barra">
+                  {segmentos.map((segmento) => (
+                    <div
+                      key={segmento.estado}
+                      className={`salud-flota-segmento fondo-${segmento.color}`}
+                      style={{
+                        width: `${(segmento.cantidad / totalEquipos) * 100}%`,
+                      }}
+                    />
+                  ))}
+                </div>
 
-          <section>
-            <p className="seccion-titulo">EQUIPOS MONITOREADOS</p>
+                <div className="salud-flota-leyenda">
+                  <span>
+                    <i className="punto-leyenda fondo-verde" /> NORMAL
+                  </span>
+                  <span>
+                    <i className="punto-leyenda fondo-ambar" /> ADVERTENCIA
+                  </span>
+                  <span>
+                    <i className="punto-leyenda fondo-rojo" /> CRÍTICO
+                  </span>
+                  <span>
+                    <i className="punto-leyenda fondo-gris" /> FUERA DE LÍNEA
+                  </span>
+                </div>
+              </section>
 
-            <div className="grilla-equipos">
-              {equiposDemo.map((equipo) => (
-                <TarjetaEquipo
-                  key={equipo.id}
-                  equipo={equipo}
-                  onSeleccionar={onSeleccionarEquipo}
-                />
-              ))}
-            </div>
-          </section>
+              <section>
+                <p className="seccion-titulo">EQUIPOS MONITOREADOS</p>
+
+                <div className="grilla-equipos">
+                  {equipos.map((equipo) => (
+                    <TarjetaEquipo
+                      key={equipo.id}
+                      equipo={equipo}
+                      onSeleccionar={onSeleccionarEquipo}
+                    />
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
         </main>
       </div>
     </div>

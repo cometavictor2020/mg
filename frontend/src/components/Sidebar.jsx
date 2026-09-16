@@ -1,5 +1,5 @@
 import { dashboardDemo } from "../data/dashboardDemo"
-import { equiposDemo } from "../data/equiposDemo"
+import { useEquiposReales } from "../hooks/useEquiposReales"
 
 function IconoResumen() {
   return (
@@ -49,7 +49,15 @@ function IconoConfiguracion() {
   )
 }
 
-function Sidebar({ vistaActiva, onIrAResumen, equipoActivoId, onSeleccionarEquipo }) {
+function Sidebar({
+  vistaActiva,
+  onIrAResumen,
+  onIrAConfiguracion,
+  equipoActivoId,
+  onSeleccionarEquipo,
+}) {
+  const { equipos } = useEquiposReales()
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -101,7 +109,11 @@ function Sidebar({ vistaActiva, onIrAResumen, equipoActivoId, onSeleccionarEquip
           </span>
         </button>
 
-        <button type="button">
+        <button
+          type="button"
+          className={vistaActiva === "configuracion" ? "nav-item-activo" : ""}
+          onClick={onIrAConfiguracion}
+        >
           <span className="nav-item-grupo">
             <span className="nav-item-icono">
               <IconoConfiguracion />
@@ -114,7 +126,7 @@ function Sidebar({ vistaActiva, onIrAResumen, equipoActivoId, onSeleccionarEquip
       <section className="sidebar-equipos">
         <p className="sidebar-section-title">EQUIPOS</p>
 
-        {equiposDemo.map((equipo) => (
+        {equipos.map((equipo) => (
           <button
             key={equipo.id}
             type="button"
@@ -131,7 +143,9 @@ function Sidebar({ vistaActiva, onIrAResumen, equipoActivoId, onSeleccionarEquip
               <strong>{equipo.nombre}</strong>
 
               <small>
-                {equipo.id} · {equipo.potenciaKw} kW
+                {equipo.potenciaKw !== null
+                  ? `${equipo.potenciaKw} kW`
+                  : "Sin potencia registrada"}
               </small>
             </span>
           </button>

@@ -14,7 +14,8 @@ import {
 
 import Sidebar from "../components/Sidebar"
 import { dashboardDemo } from "../data/dashboardDemo"
-import { equiposDemo } from "../data/equiposDemo"
+import { useEquiposReales } from "../hooks/useEquiposReales"
+import { apiFetch } from "../utils/apiFetch"
 
 const ESTADISTICOS_VACIOS = {
   curtosis: [],
@@ -26,11 +27,20 @@ function AnalizadorVibraciones({
   sesion,
   onCerrarSesion,
   onIrAResumen,
+  onIrAConfiguracion,
   equipoInicialId,
 }) {
+  const { equipos, cargando: cargandoEquipos } = useEquiposReales()
+
   const [equipoSeleccionadoId, setEquipoSeleccionadoId] = useState(
-    equipoInicialId ?? equiposDemo[0]?.id ?? null
+    equipoInicialId ?? null
   )
+
+  useEffect(() => {
+    if (equipoSeleccionadoId === null && equipos.length > 0) {
+      setEquipoSeleccionadoId(equipos[0].id)
+    }
+  }, [equipos, equipoSeleccionadoId])
 
   const [pestanaActiva, setPestanaActiva] = useState("tiempo")
   const [mensajeBackend, setMensajeBackend] = useState("")
@@ -44,11 +54,11 @@ function AnalizadorVibraciones({
 
   const equipoSeleccionado = useMemo(() => {
     return (
-      equiposDemo.find(
+      equipos.find(
         (equipo) => equipo.id === equipoSeleccionadoId
       ) ?? null
     )
-  }, [equipoSeleccionadoId])
+  }, [equipos, equipoSeleccionadoId])
 
   const sensorPrincipal = equipoSeleccionado?.sensores?.[0] ?? null
 
@@ -69,19 +79,33 @@ function AnalizadorVibraciones({
   }, [datos])
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/datos")
-      .then((respuesta) => {
+    if (!equipoSeleccionado) {
+      return
+    }
+
+    const idEquipo = equipoSeleccionado.id
+
+    setDatos([])
+    setDatosFFT([])
+    setDatosEstadisticos(ESTADISTICOS_VACIOS)
+
+    function mensajeError(respuesta, generico) {
+      return respuesta.status === 404
+        ? "Este equipo no tiene mediciones registradas"
+        : generico
+    }
+
+    apiFetch(`http://127.0.0.1:8000/api/datos?equipo_id=${idEquipo}`)
+      .then(async (respuesta) => {
         if (!respuesta.ok) {
           throw new Error(
-            "No fue posible obtener los datos temporales"
+            mensajeError(respuesta, "No fue posible obtener los datos temporales")
           )
         }
 
         return respuesta.json()
       })
       .then((respuestaDatos) => {
-        console.log("Datos temporales:", respuestaDatos)
-
         setDatos(respuestaDatos.datos)
 
         setMensajeBackend(
@@ -89,21 +113,18 @@ function AnalizadorVibraciones({
         )
       })
       .catch((error) => {
-        console.error(error)
-        setMensajeBackend("Error al conectar con el backend")
+        setMensajeBackend(error.message)
       })
 
-    fetch("http://127.0.0.1:8000/api/fft")
+    apiFetch(`http://127.0.0.1:8000/api/fft?equipo_id=${idEquipo}`)
       .then((respuesta) => {
         if (!respuesta.ok) {
-          throw new Error("No fue posible obtener los datos FFT")
+          throw new Error(mensajeError(respuesta, "No fue posible obtener los datos FFT"))
         }
 
         return respuesta.json()
       })
       .then((respuestaFFT) => {
-        console.log("Datos FFT:", respuestaFFT)
-
         setDatosFFT(respuestaFFT.datos)
 
         setMensajeFFT(
@@ -111,23 +132,20 @@ function AnalizadorVibraciones({
         )
       })
       .catch((error) => {
-        console.error(error)
-        setMensajeFFT("Error al obtener la FFT")
+        setMensajeFFT(error.message)
       })
 
-    fetch("http://127.0.0.1:8000/api/estadisticos")
+    apiFetch(`http://127.0.0.1:8000/api/estadisticos?equipo_id=${idEquipo}`)
       .then((respuesta) => {
         if (!respuesta.ok) {
           throw new Error(
-            "No fue posible obtener los estadísticos"
+            mensajeError(respuesta, "No fue posible obtener los estadísticos")
           )
         }
 
         return respuesta.json()
       })
       .then((respuestaEstadisticos) => {
-        console.log("Estadísticos:", respuestaEstadisticos)
-
         setDatosEstadisticos(respuestaEstadisticos)
 
         setMensajeEstadisticos(
@@ -135,10 +153,9 @@ function AnalizadorVibraciones({
         )
       })
       .catch((error) => {
-        console.error(error)
-        setMensajeEstadisticos("Error al obtener los estadísticos")
+        setMensajeEstadisticos(error.message)
       })
-  }, [])
+  }, [equipoSeleccionado])
 
   function seleccionarEquipo(equipo) {
     setEquipoSeleccionadoId(equipo.id)
@@ -153,11 +170,13 @@ function AnalizadorVibraciones({
     return (
       <main className="dashboard-content">
         <section className="tarjeta">
-          <h1>No hay equipos registrados</h1>
-          <p>
-            Registra el primer equipo para comenzar a visualizar sus
-            sensores y análisis.
-          </p>
+          <h1>{cargandoEquipos ? "Cargando equipos…" : "No hay equipos registrados"}</h1>
+          {!cargandoEquipos && (
+            <p>
+              Registra el primer equipo en Configuración → Equipos para
+              comenzar a visualizar sus sensores y análisis.
+            </p>
+          )}
         </section>
       </main>
     )
@@ -175,6 +194,7 @@ function AnalizadorVibraciones({
       <Sidebar
         vistaActiva="detalle"
         onIrAResumen={onIrAResumen}
+        onIrAConfiguracion={onIrAConfiguracion}
         equipoActivoId={equipoSeleccionado.id}
         onSeleccionarEquipo={seleccionarEquipo}
       />
