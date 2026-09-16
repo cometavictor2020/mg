@@ -1,0 +1,1258 @@
+# =============================================================================
+# MotorGuardian - Base de conocimiento normativa y diagnóstica
+# Archivo: normativa_motorguardian.yaml
+# Versión: 1.1.0 (Corregida y Optimizada)
+#
+# OBJETIVO
+# -------
+# Base de referencia legible por Python para:
+#   1. validar la calidad de una adquisición de vibraciones;
+#   2. clasificar severidad global según criterios configurados de ISO 20816;
+#   3. extraer/interpretar indicadores temporales, espectrales y envolvente;
+#   4. generar hipótesis diagnósticas mediante reglas curadas;
+#   5. combinar evidencia y asignar niveles de confianza;
+#   6. preparar datos para modelos ML y pronóstico;
+#   7. entregar al LLM hechos estructurados, NO texto de normas ISO.
+# =============================================================================
+
+metadata:
+  proyecto: "MotorGuardian"
+  archivo: "normativa_motorguardian.yaml"
+  version_esquema: "1.1.0"
+  fecha_creacion: "2026-08-29"
+  fecha_modificacion: "2026-08-31"
+  idioma: "es"
+  estado: "base_curada_corregida"
+  propietario_logico: "MotorGuardian"
+  proposito: "Base de conocimiento normativa, de severidad, diagnóstico y pronóstico"
+  texto_iso_incrustado: false
+  requiere_revision_experto: true
+  uso_produccion_autorizado: false
+
+  advertencias:
+    - "No usar este archivo como sustituto de las normas ISO oficiales."
+    - "Verificar los límites numéricos con la edición licenciada aplicable antes de uso productivo."
+    - "Las recomendaciones del fabricante del activo pueden prevalecer sobre límites genéricos."
+    - "No emitir diagnóstico concluyente cuando la calidad de medición sea insuficiente."
+    - "El LLM debe explicar resultados calculados por reglas/modelos; no inventar umbrales ni diagnósticos."
+
+# -----------------------------------------------------------------------------
+# 1. REFERENCIAS NORMATIVAS
+# -----------------------------------------------------------------------------
+
+normas:
+  ISO_20816_1:
+    referencia: "ISO 20816-1"
+    funcion_motorguardian: "Marco general para evaluación de vibración de máquinas"
+    aporta:
+      - "evaluacion_global_de_vibracion"
+      - "zonas_de_severidad"
+      - "cambios_respecto_a_condicion_previa"
+    uso: "evaluacion"
+
+  ISO_20816_3:
+    referencia: "ISO 20816-3:2022"
+    funcion_motorguardian: "Evaluación de vibración de maquinaria industrial"
+    uso: "evaluacion"
+    condiciones_generales_configuradas:
+      potencia_min_kw: 15
+      potencia_max_kw: 50000
+      velocidad_min_rpm: 120
+      velocidad_max_rpm: 30000
+    nota: "Incluye criterios de velocidad RMS y desplazamiento RMS para bajas RPM."
+
+  ISO_20816_9:
+    referencia: "ISO 20816-9:2020"
+    funcion_motorguardian: "Evaluación de vibración en engranajes/cajas reductoras"
+    uso: "evaluacion_futura"
+    habilitado: false
+
+  ISO_13373_1:
+    referencia: "ISO 13373-1"
+    funcion_motorguardian: "Medición y adquisición de vibraciones"
+    aporta:
+      - "seleccion_transductor"
+      - "ubicacion_transductor"
+      - "montaje"
+      - "adquisicion"
+      - "condiciones_operacion"
+      - "calidad_de_medicion"
+    uso: "adquisicion"
+
+  ISO_13373_2:
+    referencia: "ISO 13373-2"
+    funcion_motorguardian: "Procesamiento y análisis de señales de vibración"
+    aporta:
+      - "dominio_temporal"
+      - "dominio_frecuencia"
+      - "demodulacion_envolvente"
+      - "procesamiento_senal"
+      - "presentacion_resultados"
+    uso: "procesamiento"
+
+  ISO_13373_3:
+    referencia: "ISO 13373-3"
+    funcion_motorguardian: "Procedimientos generales de diagnóstico vibratorio"
+    uso: "diagnostico"
+
+  ISO_13373_9:
+    referencia: "ISO 13373-9:2026"
+    edicion: 2
+    fecha_publicacion: "2026-08"
+    funcion_motorguardian: "Diagnóstico vibratorio específico de motores eléctricos"
+    tipos_motor_principales:
+      - "induccion_jaula_ardilla"
+      - "induccion_rotor_bobinado"
+      - "polos_salientes"
+      - "corriente_continua"
+    aplicabilidad_preferente:
+      potencia_min_kw: 15
+    uso: "diagnostico_motor"
+    prioridad: "alta"
+
+  ISO_17359:
+    referencia: "ISO 17359:2018"
+    funcion_motorguardian: "Estructuración del programa de monitoreo de condición"
+    aporta:
+      - "criticidad"
+      - "modos_de_falla"
+      - "baseline"
+      - "alarmas"
+      - "tendencias"
+      - "estrategia_de_monitoreo"
+    uso: "gestion_condicion"
+
+  ISO_13374:
+    referencia: "ISO 13374"
+    funcion_motorguardian: "Procesamiento, comunicación y presentación de información de condición"
+    uso: "arquitectura_datos"
+
+  ISO_13379_1:
+    referencia: "ISO 13379-1:2025"
+    funcion_motorguardian: "Marco de interpretación de datos y diagnóstico"
+    aporta:
+      - "conceptos_comunes"
+      - "seleccion_enfoque_diagnostico"
+      - "interpretacion_de_evidencia"
+    uso: "inferencia_diagnostica"
+
+  ISO_13379_2:
+    referencia: "ISO 13379-2:2015"
+    funcion_motorguardian: "Métodos de diagnóstico basados en datos"
+    uso: "machine_learning"
+
+  ISO_13381_1:
+    referencia: "ISO 13381-1:2025"
+    funcion_motorguardian: "Pronóstico y estimación de degradación"
+    aporta:
+      - "pronostico"
+      - "datos_para_pronostico"
+      - "tasa_degradacion"
+      - "incertidumbre"
+      - "vida_util_restante"
+    uso: "prognostics"
+
+# -----------------------------------------------------------------------------
+# 2. PERFIL DEL ACTIVO
+# -----------------------------------------------------------------------------
+
+esquema_activo:
+  campos_obligatorios:
+    - planta_id
+    - maquina_id
+    - tipo_equipo
+    - potencia_kw
+    - rpm_nominal
+    - frecuencia_linea_hz
+
+  campos:
+    planta_id:
+      tipo: "str"
+
+    maquina_id:
+      tipo: "str"
+
+    tipo_equipo:
+      tipo: "enum"
+      valores:
+        - "motor"
+        - "motor_bomba"
+        - "motor_ventilador"
+        - "motor_reductor"
+        - "bomba"
+        - "ventilador"
+        - "reductor"
+        - "otro"
+
+    tipo_motor:
+      tipo: "enum"
+      requerido_si:
+        tipo_equipo: "motor"
+      valores:
+        - "induccion_jaula_ardilla"
+        - "induccion_rotor_bobinado"
+        - "polos_salientes"
+        - "corriente_continua"
+        - "otro"
+        - "desconocido"
+
+    potencia_kw:
+      tipo: "float"
+      unidad: "kW"
+      minimo: 0
+
+    rpm_nominal:
+      tipo: "float"
+      unidad: "rpm"
+      minimo: 0
+
+    frecuencia_linea_hz:
+      tipo: "float"
+      unidad: "Hz"
+      default: 50.0
+
+    alimentacion_vfd:
+      tipo: "bool"
+      default: false
+      nota: "Si es True, ajustar tolerancias de frecuencia dinámicamente según RPM real."
+
+    numero_polos:
+      tipo: "int"
+      opcional: true
+
+    altura_eje_mm:
+      tipo: "float"
+      unidad: "mm"
+      opcional: true
+
+    soporte:
+      tipo: "enum"
+      valores:
+        - "rigido"
+        - "flexible"
+        - "desconocido"
+
+    criticidad:
+      tipo: "enum"
+      valores:
+        - "baja"
+        - "media"
+        - "alta"
+        - "critica"
+
+    fabricante:
+      tipo: "str"
+      opcional: true
+
+    modelo:
+      tipo: "str"
+      opcional: true
+
+# -----------------------------------------------------------------------------
+# 3. ISO 20816-3 - CRITERIOS DE SEVERIDAD CONFIGURADOS
+# -----------------------------------------------------------------------------
+
+severidad_iso_20816_3:
+  habilitado: true
+  edicion_referencia: "2022"
+  parametro_principal: "velocidad_rms"
+  parametro_complementario_bajas_rpm: "desplazamiento_rms"
+  unidad_velocidad: "mm/s"
+  unidad_desplazamiento: "um"
+
+  condiciones_aplicacion:
+    potencia_min_kw: 15
+    potencia_max_kw: 50000
+    rpm_min: 120
+    rpm_max: 30000
+    exigir_soporte_conocido: true
+    exigir_grupo_conocido: true
+
+  seleccion_grupo:
+    grupo_1:
+      descripcion: "Máquinas grandes (300 kW < P <= 50 MW o Altura de eje H >= 315 mm)"
+      criterio:
+        potencia_kw_mayor_que: 300
+        potencia_kw_menor_igual_que: 50000
+        o_altura_eje_mm_mayor_igual_que: 315
+
+    grupo_2:
+      descripcion: "Máquinas medianas (15 kW < P <= 300 kW o 160 mm <= Altura de eje H < 315 mm)"
+      criterio:
+        potencia_kw_mayor_que: 15
+        potencia_kw_menor_igual_que: 300
+        o_altura_eje_mm_desde: 160
+        o_altura_eje_mm_hasta_exclusivo: 315
+
+  tablas:
+    grupo_1:
+      rigido:
+        A:
+          min_inclusivo: 0.0
+          max_exclusivo: 2.3
+          nivel: 0
+        B:
+          min_inclusivo: 2.3
+          max_exclusivo: 4.5
+          nivel: 1
+        C:
+          min_inclusivo: 4.5
+          max_exclusivo: 7.1
+          nivel: 2
+        D:
+          min_inclusivo: 7.1
+          max_exclusivo: null
+          nivel: 3
+
+      flexible:
+        A:
+          min_inclusivo: 0.0
+          max_exclusivo: 3.5
+          nivel: 0
+        B:
+          min_inclusivo: 3.5
+          max_exclusivo: 7.1
+          nivel: 1
+        C:
+          min_inclusivo: 7.1
+          max_exclusivo: 11.0
+          nivel: 2
+        D:
+          min_inclusivo: 11.0
+          max_exclusivo: null
+          nivel: 3
+
+    grupo_2:
+      rigido:
+        A:
+          min_inclusivo: 0.0
+          max_exclusivo: 1.4
+          nivel: 0
+        B:
+          min_inclusivo: 1.4
+          max_exclusivo: 2.8
+          nivel: 1
+        C:
+          min_inclusivo: 2.8
+          max_exclusivo: 4.5
+          nivel: 2
+        D:
+          min_inclusivo: 4.5
+          max_exclusivo: null
+          nivel: 3
+
+      flexible:
+        A:
+          min_inclusivo: 0.0
+          max_exclusivo: 2.3
+          nivel: 0
+        B:
+          min_inclusivo: 2.3
+          max_exclusivo: 4.5
+          nivel: 1
+        C:
+          min_inclusivo: 4.5
+          max_exclusivo: 7.1
+          nivel: 2
+        D:
+          min_inclusivo: 7.1
+          max_exclusivo: null
+          nivel: 3
+
+  significado_zonas:
+    A:
+      severidad: "muy_baja"
+      accion_default: "continuar_monitoreo"
+    B:
+      severidad: "aceptable"
+      accion_default: "continuar_monitoreo_y_tendencia"
+    C:
+      severidad: "alerta"
+      accion_default: "programar_inspeccion"
+    D:
+      severidad: "critica"
+      accion_default: "evaluar_intervencion_urgente"
+
+  prioridad_limites:
+    - "limite_especifico_fabricante"
+    - "limite_especifico_activo"
+    - "criterio_iso_configurado"
+    - "baseline_historico"
+
+# -----------------------------------------------------------------------------
+# 4. CALIDAD DE MEDICIÓN
+# -----------------------------------------------------------------------------
+
+calidad_medicion:
+  bloqueo_diagnostico_si_falla_critica: true
+
+  datos_requeridos:
+    - "frecuencia_muestreo_hz"
+    - "duracion_s"
+    - "orientacion"
+    - "ubicacion_sensor"
+    - "rpm_medida_o_estimable"
+
+  validaciones:
+    saturacion_sensor:
+      criticidad: "critica"
+      condicion_valida: false
+
+    muestras_perdidas:
+      criticidad: "alta"
+      porcentaje_max_admisible_default: 0.1
+
+    frecuencia_muestreo:
+      criticidad: "critica"
+      regla:
+        tipo: "nyquist"
+        factor_minimo_sobre_fmax: 2.0
+        factor_recomendado_sobre_fmax: 2.56
+
+    duracion_registro:
+      criticidad: "media"
+      regla:
+        exigir_resolucion_frecuencia_adecuada: true
+
+    rpm_disponible:
+      criticidad: "alta"
+      requerido_para:
+        - "1x"
+        - "2x"
+        - "armonicos"
+        - "order_tracking"
+        - "bandas_laterales_relativas"
+
+    condicion_operacional_estable:
+      criticidad: "alta"
+      variables_a_controlar:
+        - "rpm"
+        - "carga_pct"
+        - "estado_proceso"
+
+    montaje_sensor:
+      criticidad: "alta"
+      valores_preferidos:
+        - "esparrago"
+        - "adhesivo_rigido"
+        - "montaje_permanente"
+      valores_con_precaucion:
+        - "iman"
+        - "sonda_manual"
+
+    orientacion_sensor:
+      criticidad: "media"
+      valores:
+        - "radial_horizontal"
+        - "radial_vertical"
+        - "axial"
+        - "triaxial"
+
+  resultado:
+    estados:
+      - "valida"
+      - "valida_con_advertencias"
+      - "insuficiente"
+      - "invalida"
+
+# -----------------------------------------------------------------------------
+# 5. VARIABLES CALCULADAS POR MOTORGUARDIAN
+# -----------------------------------------------------------------------------
+
+features:
+  temporales:
+    rms_aceleracion:
+      unidad_preferida: "g"
+    rms_velocidad:
+      unidad_preferida: "mm/s"
+    rms_desplazamiento:
+      unidad_preferida: "um"
+    pico:
+      unidad: "segun_senal"
+    pico_pico:
+      unidad: "segun_senal"
+    crest_factor:
+      unidad: "adimensional"
+    kurtosis:
+      unidad: "adimensional"
+    skewness:
+      unidad: "adimensional"
+      habilitado: false
+
+  espectrales:
+    frecuencia_1x:
+      calculo: "rpm/60"
+    frecuencia_2x:
+      calculo: "2*rpm/60"
+    frecuencia_3x:
+      calculo: "3*rpm/60"
+    sub_armonicos_0_5x:
+      calculo: "0.5*rpm/60"
+    amplitud_1x: {}
+    amplitud_2x: {}
+    amplitud_3x: {}
+    numero_armonicos_significativos: {}
+    bandas_laterales: {}
+    energia_banda_ancha: {}
+    frecuencia_pico_dominante: {}
+
+  envolvente:
+    habilitado: true
+    metodo: "demodulacion_hilbert"
+    rms_envolvente:
+      unidad: "g_E"
+    espectro_envolvente:
+      picos_relevantes:
+        - "BPFO"
+        - "BPFI"
+        - "BSF"
+        - "FTF"
+
+  rodamientos:
+    requiere_geometria_rodamiento: true
+    variables_geometria:
+      - "numero_elementos_rodantes"
+      - "diametro_elemento"
+      - "diametro_paso"
+      - "angulo_contacto"
+    frecuencias:
+      FTF:
+        nombre: "frecuencia_jaula"
+      BSF:
+        nombre: "frecuencia_elemento_rodante"
+      BPFO:
+        nombre: "frecuencia_paso_pista_exterior"
+      BPFI:
+        nombre: "frecuencia_paso_pista_interior"
+
+  engranajes:
+    GMF:
+      nombre: "gear_mesh_frequency"
+      formula: "numero_dientes * frecuencia_rotacion_hz"
+
+  electromecanicas:
+    frecuencia_red:
+      variable: "frecuencia_linea_hz"
+    frecuencia_paso_polos:
+      formula: "2 * deslizamiento * frecuencia_linea_hz"
+    frecuencia_paso_ranuras_stator:
+      nombre: "RBPF"
+
+  tendencia:
+    baseline:
+      requerido: false
+    delta_rms_pct: {}
+    pendiente_rms: {}
+    pendiente_kurtosis: {}
+    pendiente_energia_banda_alta: {}
+    dias_ventana_default: 30
+
+# -----------------------------------------------------------------------------
+# 6. REGLAS DIAGNÓSTICAS CURADAS
+# -----------------------------------------------------------------------------
+
+motor_diagnostico:
+  metodo: "sistema_de_evidencias_ponderadas"
+  diagnostico_unico_obligatorio: false
+  permitir_multiples_fallas: true
+
+  pesos_evidencia:
+    fuerte: 3.0
+    moderada: 2.0
+    debil: 1.0
+    en_contra: -2.0
+
+  reglas:
+
+    desbalanceo:
+      categoria: "mecanica"
+      aplica_a:
+        - "motor"
+        - "motor_bomba"
+        - "motor_ventilador"
+        - "motor_reductor"
+      evidencias:
+        - feature: "amplitud_1x"
+          condicion: "elevada"
+          peso: "fuerte"
+        - feature: "direccion_radial"
+          condicion: "predominante"
+          peso: "moderada"
+        - feature: "amplitud_2x"
+          condicion: "baja_respecto_1x"
+          peso: "debil"
+      evidencias_en_contra:
+        - feature: "vibracion_axial"
+          condicion: "muy_elevada"
+          peso: "en_contra"
+        - feature: "muchos_armonicos_1x"
+          condicion: true
+          peso: "en_contra"
+      recomendacion:
+        - "verificar_acumulacion_material"
+        - "verificar_elementos_rotantes"
+        - "evaluar_balanceo_dinamico"
+
+    desalineacion_angular:
+      categoria: "mecanica"
+      evidencias:
+        - feature: "amplitud_1x"
+          condicion: "elevada"
+          peso: "moderada"
+        - feature: "vibracion_axial"
+          condicion: "elevada"
+          peso: "fuerte"
+        - feature: "amplitud_2x"
+          condicion: "presente_o_elevada"
+          peso: "moderada"
+      recomendacion:
+        - "inspeccionar_acoplamiento"
+        - "verificar_alineacion_angular"
+        - "medir_fase_si_disponible"
+
+    desalineacion_paralela:
+      categoria: "mecanica"
+      evidencias:
+        - feature: "amplitud_2x"
+          condicion: "elevada"
+          peso: "fuerte"
+        - feature: "amplitud_1x"
+          condicion: "presente"
+          peso: "moderada"
+        - feature: "vibracion_radial"
+          condicion: "elevada"
+          peso: "moderada"
+      recomendacion:
+        - "verificar_alineacion_paralela"
+        - "inspeccionar_acoplamiento"
+
+    holgura_mecanica_estructural:
+      categoria: "mecanica"
+      evidencias:
+        - feature: "numero_armonicos_significativos"
+          condicion: "alto"
+          peso: "fuerte"
+        - feature: "armonicos_1x"
+          condicion: "1x_2x_3x_4x_elevados"
+          peso: "fuerte"
+        - feature: "direccion_predominante"
+          condicion: "radial_con_alta_direccionalidad"
+          peso: "moderada"
+      recomendacion:
+        - "revisar_pernos_y_anclajes_de_base"
+        - "verificar_pata_suave_soft_foot"
+
+    holgura_mecanica_interna:
+      categoria: "mecanica"
+      evidencias:
+        - feature: "sub_armonicos"
+          condicion: "presencia_0_5x_1_5x_2_5x"
+          peso: "fuerte"
+        - feature: "numero_armonicos_significativos"
+          condicion: "muy_alto"
+          peso: "fuerte"
+        - feature: "senal_temporal"
+          condicion: "impactiva_o_no_lineal"
+          peso: "moderada"
+      recomendacion:
+        - "inspeccionar_juegos_internos_en_cojinetes_o_rodamientos"
+        - "revisar_ajustes_de_alojamientos"
+
+    eje_doblado:
+      categoria: "mecanica"
+      evidencias:
+        - feature: "amplitud_1x"
+          condicion: "elevada"
+          peso: "moderada"
+        - feature: "vibracion_axial"
+          condicion: "presente"
+          peso: "moderada"
+        - feature: "fase"
+          condicion: "diferencia_180_grados_a_traves_del_eje"
+          peso: "fuerte"
+          requiere_feature: true
+      recomendacion:
+        - "verificar_runout_mecanico"
+        - "medir_fase_axial"
+        - "inspeccionar_eje"
+
+    resonancia:
+      categoria: "dinamica"
+      evidencias:
+        - feature: "amplitud_vibracion"
+          condicion: "aumenta_fuertemente_cerca_frecuencia_natural"
+          peso: "fuerte"
+        - feature: "variacion_rpm"
+          condicion: "produce_cambio_abrupto_amplitud"
+          peso: "fuerte"
+      requisitos:
+        - "datos_a_distintas_rpm_o_runup_coastdown"
+      recomendacion:
+        - "realizar_runup_coastdown"
+        - "evaluar_frecuencia_natural"
+        - "revisar_rigidez_del_sistema"
+
+    rodamiento_pista_exterior:
+      categoria: "rodamiento"
+      evidencias:
+        - feature: "espectro_envolvente_BPFO"
+          condicion: "pico_significativo"
+          peso: "fuerte"
+        - feature: "armonicos_BPFO"
+          condicion: "presentes"
+          peso: "fuerte"
+        - feature: "kurtosis"
+          condicion: "elevada_o_rms_aceleracion_creciente"
+          peso: "moderada"
+      requisitos:
+        - "frecuencias_rodamiento_disponibles"
+      recomendacion:
+        - "inspeccionar_rodamiento"
+        - "analizar_espectro_de_envolvente"
+        - "evaluar_lubricacion"
+
+    rodamiento_pista_interior:
+      categoria: "rodamiento"
+      evidencias:
+        - feature: "espectro_envolvente_BPFI"
+          condicion: "pico_significativo"
+          peso: "fuerte"
+        - feature: "bandas_laterales_BPFI"
+          condicion: "separadas_1x_alrededor_de_BPFI"
+          peso: "fuerte"
+        - feature: "armonicos_BPFI"
+          condicion: "presentes"
+          peso: "moderada"
+      requisitos:
+        - "frecuencias_rodamiento_disponibles"
+      recomendacion:
+        - "inspeccionar_rodamiento"
+        - "analizar_espectro_de_envolvente"
+
+    rodamiento_elemento_rodante:
+      categoria: "rodamiento"
+      evidencias:
+        - feature: "espectro_envolvente_BSF"
+          condicion: "pico_significativo"
+          peso: "fuerte"
+        - feature: "bandas_laterales_BSF"
+          condicion: "separadas_FTF_alrededor_de_BSF"
+          peso: "moderada"
+      requisitos:
+        - "frecuencias_rodamiento_disponibles"
+      recomendacion:
+        - "inspeccionar_elementos_rodantes"
+        - "analizar_espectro_de_envolvente"
+
+    rodamiento_jaula:
+      categoria: "rodamiento"
+      evidencias:
+        - feature: "espectro_envolvente_FTF"
+          condicion: "pico_o_modulacion_significativa"
+          peso: "fuerte"
+      requisitos:
+        - "frecuencias_rodamiento_disponibles"
+      recomendacion:
+        - "inspeccionar_jaula_del_rodamiento"
+
+    lubricacion_deficiente:
+      categoria: "rodamiento"
+      evidencias:
+        - feature: "energia_alta_frecuencia"
+          condicion: "creciente"
+          peso: "fuerte"
+        - feature: "kurtosis"
+          condicion: "elevada_inicial_o_normal_con_rms_aceleracion_muy_alto"
+          peso: "moderada"
+        - feature: "espectro_envolvente"
+          condicion: "piso_de_ruido_elevado_en_alta_frecuencia"
+          peso: "moderada"
+      recomendacion:
+        - "verificar_tipo_y_cantidad_de_lubricante"
+        - "revisar_intervalo_de_lubricacion"
+        - "correlacionar_con_temperatura_de_chumaceras"
+
+    engranaje_deteriorado:
+      categoria: "engranajes"
+      aplica_a:
+        - "motor_reductor"
+        - "reductor"
+      evidencias:
+        - feature: "GMF"
+          condicion: "elevada"
+          peso: "moderada"
+        - feature: "bandas_laterales_GMF"
+          condicion: "presentes"
+          peso: "fuerte"
+        - feature: "impactos_periodicos"
+          condicion: true
+          peso: "moderada"
+      requisitos:
+        - "numero_dientes_disponible"
+      recomendacion:
+        - "inspeccionar_dientes"
+        - "verificar_lubricacion_reductor"
+        - "analizar_bandas_laterales"
+
+    excentricidad:
+      categoria: "mecanica_electromagnetica"
+      evidencias:
+        - feature: "componente_2FL"
+          condicion: "elevada_2_veces_frecuencia_linea"
+          peso: "fuerte"
+        - feature: "amplitud_1x"
+          condicion: "elevada"
+          peso: "moderada"
+      recomendacion:
+        - "verificar_entrehierro_air_gap"
+        - "revisar_excentricidad_estatica_y_dinamica"
+
+    problema_electrico_estator:
+      categoria: "electrica"
+      evidencias:
+        - feature: "componente_2FL"
+          condicion: "elevada_2_veces_frecuencia_linea"
+          peso: "fuerte"
+        - feature: "bandas_laterales_2FL"
+          condicion: "presentes"
+          peso: "moderada"
+      nota:
+        - "Confirmar con mediciones eléctricas MCSA (Current Signature Analysis) si están disponibles."
+      recomendacion:
+        - "correlacionar_con_corriente_y_tension"
+        - "inspeccionar_aislamiento_estator"
+
+    rotor_barra_rota_sospecha:
+      categoria: "electrica_rotor"
+      aplica_a:
+        - "induccion_jaula_ardilla"
+      evidencias:
+        - feature: "bandas_laterales_frecuencia_paso_polos"
+          condicion: "presentes_alrededor_de_1X_y_sus_armonicos"
+          peso: "fuerte"
+        - feature: "carga_motor"
+          condicion: "suficiente_mayor_a_50_pct"
+          peso: "debil"
+      nota:
+        - "La frecuencia de paso de polos Fp = 2 * s * FL (s = deslizamiento, FL = freq línea)."
+        - "No confirmar únicamente con vibración; requiere validación con MCSA."
+      recomendacion:
+        - "realizar_analisis_de_firma_de_corriente_mcsa"
+        - "correlacionar_con_carga_y_deslizamiento_real"
+
+    cavitacion:
+      categoria: "hidraulica"
+      aplica_a:
+        - "bomba"
+        - "motor_bomba"
+      evidencias:
+        - feature: "energia_banda_ancha"
+          condicion: "elevada_en_alta_frecuencia"
+          peso: "fuerte"
+        - feature: "senal_temporal"
+          condicion: "aleatoria_impactiva"
+          peso: "moderada"
+      recomendacion:
+        - "verificar_NPSH_disponible"
+        - "revisar_succion_y_filtros"
+        - "verificar_presion_y_caudal_de_operacion"
+
+# -----------------------------------------------------------------------------
+# 7. MOTOR DE CONFIANZA DIAGNÓSTICA
+# -----------------------------------------------------------------------------
+
+confianza_diagnostico:
+  metodo: "score_normalizado_por_evidencia_disponible"
+
+  formula_conceptual: >
+    score = suma(pesos_evidencia_cumplida) /
+            suma(pesos_positivos_maximos_de_evidencia_evaluable)
+
+  salida:
+    minimo: 0.0
+    maximo: 1.0
+
+  niveles:
+    muy_baja:
+      min_inclusivo: 0.00
+      max_exclusivo: 0.30
+      texto: "Evidencia insuficiente"
+    baja:
+      min_inclusivo: 0.30
+      max_exclusivo: 0.50
+      texto: "Hipótesis débil"
+    media:
+      min_inclusivo: 0.50
+      max_exclusivo: 0.70
+      texto: "Evidencia moderada"
+    alta:
+      min_inclusivo: 0.70
+      max_exclusivo: 0.85
+      texto: "Evidencia fuerte"
+    muy_alta:
+      min_inclusivo: 0.85
+      max_exclusivo: 1.01
+      texto: "Evidencia muy fuerte"
+
+  restricciones:
+    - condicion: "calidad_medicion == invalida"
+      confianza_maxima: 0.0
+    - condicion: "calidad_medicion == insuficiente"
+      confianza_maxima: 0.30
+    - condicion: "rpm_no_disponible"
+      afecta:
+        - "desbalanceo"
+        - "desalineacion_angular"
+        - "desalineacion_paralela"
+        - "holgura_mecanica_estructural"
+        - "holgura_mecanica_interna"
+      confianza_maxima: 0.50
+    - condicion: "geometria_rodamiento_no_disponible"
+      afecta:
+        - "rodamiento_pista_exterior"
+        - "rodamiento_pista_interior"
+        - "rodamiento_elemento_rodante"
+        - "rodamiento_jaula"
+      confianza_maxima: 0.40
+
+  reglas_salida:
+    numero_maximo_hipotesis: 3
+    incluir_hipotesis_desde_confianza: 0.30
+    marcar_diagnostico_principal_desde_confianza: 0.70
+    permitir_resultado_inconcluso: true
+
+# -----------------------------------------------------------------------------
+# 8. BASELINE, TENDENCIAS Y ALARMAS
+# -----------------------------------------------------------------------------
+
+gestion_condicion:
+  baseline:
+    habilitado: true
+    requerir_condicion_sana_confirmada: true
+    separar_por:
+      - "maquina_id"
+      - "sensor_id"
+      - "orientacion"
+      - "rango_rpm"
+      - "rango_carga"
+
+  tendencia:
+    habilitado: true
+    ventanas_dias:
+      corta: 7
+      media: 30
+      larga: 90
+
+    variables:
+      - "rms_velocidad"
+      - "rms_aceleracion"
+      - "rms_envolvente"
+      - "kurtosis"
+      - "crest_factor"
+      - "amplitud_1x"
+      - "amplitud_2x"
+      - "BPFO"
+      - "BPFI"
+      - "BSF"
+      - "FTF"
+      - "energia_alta_frecuencia"
+
+  alarmas:
+    fuentes:
+      - "limites_fabricante"
+      - "zona_iso"
+      - "desviacion_baseline"
+      - "tendencia"
+      - "regla_diagnostica"
+      - "modelo_ml"
+
+    combinacion:
+      estrategia: "mayor_severidad_con_contexto"
+
+# -----------------------------------------------------------------------------
+# 9. MACHINE LEARNING
+# -----------------------------------------------------------------------------
+
+machine_learning:
+  norma_marco: "ISO 13379-2:2015"
+  habilitado: true
+
+  modelos_previstos:
+    supervisados:
+      - "random_forest"
+      - "gradient_boosting"
+      - "red_neuronal"
+
+    no_supervisados:
+      - "autoencoder"
+      - "isolation_forest"
+
+  entradas_recomendadas:
+    - "features_temporales"
+    - "features_fft"
+    - "features_envolvente"
+    - "rpm"
+    - "carga_pct"
+    - "temperatura"
+    - "zona_iso"
+    - "deltas_respecto_baseline"
+
+  restricciones:
+    - "Nunca reemplazar validación física de la señal por una predicción ML."
+    - "Mantener versión del modelo y dataset de entrenamiento."
+    - "Registrar incertidumbre o probabilidad cuando el modelo la proporcione."
+    - "No presentar una clase ML como hecho confirmado sin evidencia complementaria."
+
+# -----------------------------------------------------------------------------
+# 10. PRONÓSTICO / RUL
+# -----------------------------------------------------------------------------
+
+pronostico:
+  norma_marco: "ISO 13381-1:2025"
+  habilitado: false
+  estado: "fase_futura"
+
+  variables:
+    indicador_salud:
+      tipo: "float"
+      rango_preferido:
+        min: 0.0
+        max: 1.0
+
+    tasa_degradacion:
+      tipo: "float"
+      unidad: "por_hora_o_por_dia"
+
+    horizonte:
+      tipo: "float"
+      unidad: "horas"
+
+    rul:
+      tipo: "float"
+      unidad: "horas"
+
+    intervalo_confianza:
+      inferior: "float"
+      superior: "float"
+
+    confianza:
+      tipo: "float"
+      rango:
+        min: 0.0
+        max: 1.0
+
+  condiciones_minimas:
+    - "historial_temporal_suficiente"
+    - "condiciones_operacionales_contextualizadas"
+    - "indicador_de_degradacion_estable"
+    - "modelo_validado"
+
+  prohibiciones:
+    - "No generar RUL únicamente a partir de una sola medición."
+    - "No permitir que el LLM invente una vida útil restante."
+
+# -----------------------------------------------------------------------------
+# 11. CONTRATO DE DATOS PARA EL LLM
+# -----------------------------------------------------------------------------
+
+llm:
+  rol: "explicar_y_contextualizar"
+  puede:
+    - "explicar_zona_iso_calculada"
+    - "explicar_evidencias_diagnosticas"
+    - "comparar_hipotesis"
+    - "redactar_recomendaciones"
+    - "explicar_tendencias"
+    - "indicar_limitaciones_del_diagnostico"
+
+  no_puede:
+    - "inventar_limites_iso"
+    - "modificar_zona_iso_calculada"
+    - "inventar_features_no_calculadas"
+    - "afirmar_falla_confirmada_sin_evidencia"
+    - "inventar_RUL"
+    - "atribuir_texto_a_una_norma_sin_fuente"
+
+  entrada_estructurada_recomendada:
+    campos:
+      - "activo"
+      - "condiciones_operacion"
+      - "calidad_medicion"
+      - "features"
+      - "zona_iso"
+      - "tendencias"
+      - "hipotesis_diagnosticas"
+      - "confianza"
+      - "limitaciones"
+      - "recomendaciones"
+
+  estilo_respuesta:
+    idioma: "es"
+    separar:
+      - "estado_general"
+      - "evidencias"
+      - "posibles_fallas"
+      - "nivel_confianza"
+      - "acciones_recomendadas"
+      - "limitaciones"
+
+# -----------------------------------------------------------------------------
+# 12. FLUJO DE DECISIÓN DEL SISTEMA
+# -----------------------------------------------------------------------------
+
+pipeline:
+  orden:
+    - id: 1
+      etapa: "adquisicion"
+      norma_principal: "ISO 13373-1"
+
+    - id: 2
+      etapa: "validacion_calidad"
+      norma_principal: "ISO 13373-1"
+
+    - id: 3
+      etapa: "procesamiento_temporal_fft_envolvente"
+      norma_principal: "ISO 13373-2"
+
+    - id: 4
+      etapa: "evaluacion_severidad"
+      norma_principal: "ISO 20816"
+
+    - id: 5
+      etapa: "analisis_tendencia_y_baseline"
+      norma_principal: "ISO 17359"
+
+    - id: 6
+      etapa: "diagnostico_vibratorio"
+      normas_principales:
+        - "ISO 13373-3"
+        - "ISO 13373-9:2026"
+
+    - id: 7
+      etapa: "inferencia_diagnostica"
+      norma_principal: "ISO 13379-1:2025"
+
+    - id: 8
+      etapa: "machine_learning"
+      norma_principal: "ISO 13379-2:2015"
+
+    - id: 9
+      etapa: "pronostico"
+      norma_principal: "ISO 13381-1:2025"
+
+    - id: 10
+      etapa: "explicacion_llm"
+      norma_principal: null
+
+# -----------------------------------------------------------------------------
+# 13. ESTRUCTURA DE RESULTADO NORMALIZADO
+# -----------------------------------------------------------------------------
+
+resultado_normalizado:
+  ejemplo:
+    timestamp: "2026-08-31T11:00:00-04:00"
+
+    activo:
+      planta_id: "PL0001"
+      maquina_id: "MTR00001"
+      tipo_equipo: "motor"
+      potencia_kw: 90
+      rpm: 1485
+      frecuencia_linea_hz: 50.0
+      alimentacion_vfd: false
+      soporte: "rigido"
+
+    calidad_medicion:
+      estado: "valida"
+      advertencias: []
+
+    indicadores:
+      velocidad_rms_mm_s: 5.2
+      aceleracion_rms_g: 0.8
+      envolvente_rms_g_E: 1.4
+      kurtosis: 4.6
+      crest_factor: 4.1
+
+    severidad:
+      norma: "ISO 20816-3:2022"
+      grupo: "grupo_2"
+      soporte: "rigido"
+      zona: "D"
+      accion: "evaluar_intervencion_urgente"
+
+    diagnostico:
+      principal:
+        falla: "desalineacion_angular"
+        confianza: 0.82
+      alternativas:
+        - falla: "desbalanceo"
+          confianza: 0.34
+      evidencias:
+        - "1x_elevado"
+        - "2x_elevado"
+        - "vibracion_axial_elevada"
+      evidencias_en_contra:
+        - "sin_BPFO_significativo"
+        - "sin_BPFI_significativo"
+
+    tendencia:
+      estado: "creciente"
+      ventana_dias: 30
+
+    pronostico:
+      disponible: false
+      motivo: "modelo_RUL_no_habilitado"
+
+    limitaciones:
+      - "Diagnóstico basado principalmente en vibración."
+      - "Requiere inspección física para confirmación."
+
+# -----------------------------------------------------------------------------
+# 14. PARÁMETROS CONFIGURABLES DEL MOTOR DE REGLAS
+# -----------------------------------------------------------------------------
+
+configuracion_motor_reglas:
+  tolerancias:
+    coincidencia_frecuencia_pct_default: 3.0
+    coincidencia_frecuencia_rodamientos_pct_default: 2.0
+    coincidencia_banda_lateral_pct_default: 3.0
+
+  deteccion_picos:
+    metodo_default: "prominencia"
+    prominencia_minima_relativa: 0.05
+    relacion_sobre_ruido_minima: 3.0
+
+  definicion_cualitativa:
+    muy_bajo:
+      max_ratio_baseline: 1.10
+    normal:
+      max_ratio_baseline: 1.25
+    elevado:
+      min_ratio_baseline: 1.25
+    muy_elevado:
+      min_ratio_baseline: 2.00
+
+  faltan_datos:
+    politica: "no_inferir"
+    registrar_feature_no_disponible: true
+
+# -----------------------------------------------------------------------------
+# 15. TRAZABILIDAD
+# -----------------------------------------------------------------------------
+
+trazabilidad:
+  registrar_por_resultado:
+    - "version_normativa_yaml"
+    - "version_algoritmo"
+    - "version_modelo_ml"
+    - "edicion_norma_configurada"
+    - "timestamp"
+    - "sensor_id"
+    - "configuracion_adquisicion"
+    - "features_utilizadas"
+    - "reglas_activadas"
+    - "evidencias"
+    - "confianza"
+    - "usuario_o_proceso_que_confirma_diagnostico"
+
+  version_normativa_yaml: "1.1.0"
