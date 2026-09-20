@@ -4,6 +4,7 @@ import Login from "./pages/Login"
 import ResumenGeneral from "./pages/ResumenGeneral"
 import AnalizadorVibraciones from "./pages/AnalizadorVibraciones"
 import Configuracion from "./pages/Configuracion"
+import Reportes from "./pages/Reportes"
 import { obtenerSesion, guardarSesion, borrarSesion } from "./utils/sesion"
 
 function App() {
@@ -43,6 +44,10 @@ function App() {
     setVista("configuracion")
   }
 
+  function irAReportes() {
+    setVista("reportes")
+  }
+
   if (cargandoSesion) {
     return null
   }
@@ -58,6 +63,7 @@ function App() {
         onCerrarSesion={cerrarSesion}
         onIrAResumen={irAResumen}
         onIrAConfiguracion={irAConfiguracion}
+        onIrAReportes={irAReportes}
         equipoInicialId={equipoDetalleId}
       />
     )
@@ -69,6 +75,19 @@ function App() {
         sesion={sesion}
         onCerrarSesion={cerrarSesion}
         onIrAResumen={irAResumen}
+        onIrAReportes={irAReportes}
+        onSeleccionarEquipo={irADetalleEquipo}
+      />
+    )
+  }
+
+  if (vista === "reportes") {
+    return (
+      <Reportes
+        sesion={sesion}
+        onCerrarSesion={cerrarSesion}
+        onIrAResumen={irAResumen}
+        onIrAConfiguracion={irAConfiguracion}
         onSeleccionarEquipo={irADetalleEquipo}
       />
     )
@@ -80,6 +99,7 @@ function App() {
       onCerrarSesion={cerrarSesion}
       onSeleccionarEquipo={irADetalleEquipo}
       onIrAConfiguracion={irAConfiguracion}
+      onIrAReportes={irAReportes}
     />
   )
 }

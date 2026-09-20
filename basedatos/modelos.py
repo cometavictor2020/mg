@@ -8,7 +8,7 @@ Responsabilidad:
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, Text
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime, JSON, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -54,16 +54,59 @@ class Equipo(Base):
     planta = relationship("Planta", back_populates="equipos")
     tipo_equipo = relationship("TipoEquipo", back_populates="equipos")
     sensores = relationship("Sensor", back_populates="equipo")
+    rodamientos = relationship("Rodamiento", back_populates="equipo")
+
+
+class Rodamiento(Base):
+    """
+    Rodamiento fisico instalado en un equipo. Se identifica con un codigo
+    (ej. "ROD-01") unico dentro de su equipo, no globalmente (D-038).
+
+    La geometria (numero_elementos_rodantes, diametro_elemento_mm,
+    diametro_paso_mm, angulo_contacto_grados) es opcional: se completa
+    cuando se conoce la ficha tecnica del rodamiento. Sin ella no se
+    pueden calcular BPFO/BPFI/BSF/FTF (ver conocimiento/
+    normativa_motorguardian.yaml, seccion rodamientos) - el motor de
+    diagnostico de rodamientos es un paso posterior a este modelo.
+    """
+
+    __tablename__ = "rodamiento"
+
+    id = Column(Integer, primary_key=True)
+    equipo_id = Column(Integer, ForeignKey("equipo.id"), nullable=False)
+    codigo = Column(String(30), nullable=False)
+    ubicacion = Column(String(150))
+    modelo = Column(String(100))
+    numero_elementos_rodantes = Column(Integer)
+    diametro_elemento_mm = Column(Float)
+    diametro_paso_mm = Column(Float)
+    angulo_contacto_grados = Column(Float)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+    equipo = relationship("Equipo", back_populates="rodamientos")
+    sensores = relationship("Sensor", back_populates="rodamiento")
 
 
 class TipoSensor(Base):
-    """Catalogo abierto de tipos de sensor (acelerometro triaxial, temperatura, etc.)."""
+    """
+    Catalogo abierto de tipos de sensor (acelerometro triaxial, RTD, etc.).
+
+    Se siembra desde conocimiento/catalogo_sensores.csv (herramientas/
+    sembrar_catalogo_sensores.py). Los tipos creados manualmente por el
+    usuario (no vienen del catalogo) quedan en familia "Personalizado".
+    """
 
     __tablename__ = "tipo_sensor"
 
     id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False, unique=True)
-    unidad_medida_default = Column(String(30))
+    nemonico = Column(String(20), unique=True)
+    familia = Column(String(60))
+    parametros_fisicos = Column(Text)
+    # Lista de unidades que este tipo de sensor puede reportar (crece con
+    # el tiempo: agregar una unidad nueva queda disponible retroactivamente
+    # para todos los sensores existentes de este tipo).
+    unidades_disponibles = Column(JSON)
     descripcion = Column(Text)
 
     sensores = relationship("Sensor", back_populates="tipo_sensor")
@@ -77,6 +120,14 @@ class Sensor(Base):
     id = Column(Integer, primary_key=True)
     equipo_id = Column(Integer, ForeignKey("equipo.id"), nullable=False)
     tipo_sensor_id = Column(Integer, ForeignKey("tipo_sensor.id"), nullable=False)
+    # Codigo nemotecnico legible, ej. "VIBPZO-01". Unico dentro del
+    # equipo, no globalmente: dos equipos distintos pueden tener cada
+    # uno un VIBPZO-01 (D-038).
+    codigo = Column(String(30))
+    # Donde esta montado fisicamente dentro del equipo, ej. "lado acople".
+    ubicacion = Column(String(150))
+    # Si este sensor monitorea un rodamiento especifico del equipo.
+    rodamiento_id = Column(Integer, ForeignKey("rodamiento.id"), nullable=True)
     estado = Column(String(30), default="activo")
     # Configuracion especifica del sensor (ejes, unidad, etc.)
     configuracion = Column(JSON)
@@ -84,6 +135,7 @@ class Sensor(Base):
 
     equipo = relationship("Equipo", back_populates="sensores")
     tipo_sensor = relationship("TipoSensor", back_populates="sensores")
+    rodamiento = relationship("Rodamiento", back_populates="sensores")
     mediciones = relationship("Medicion", back_populates="sensor")
 
 
@@ -103,6 +155,11 @@ class Medicion(Base):
     fecha_captura = Column(DateTime, default=datetime.utcnow)
     frecuencia_muestreo = Column(Integer)
     duracion_segundos = Column(Integer)
+    # Unidad declarada por el operador al cargar el archivo (una de las
+    # unidades_disponibles del tipo de sensor). Se registra tal cual,
+    # sin verificar todavia que los valores del archivo correspondan
+    # realmente a ella (D-040 - ver limitaciones en validacion_medicion.py).
+    unidad = Column(String(30))
     ruta_archivo_local = Column(String(500))
     clave_s3 = Column(String(500))
     estado_respaldo_s3 = Column(String(30), default="pendiente")
@@ -154,3 +211,24 @@ class Modelo(Base):
     estado = Column(String(30), default="planificado")
     descripcion = Column(Text)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+
+class Reporte(Base):
+    """
+    Reporte de diagnostico de un equipo en un momento dado: agrupa el
+    resultado del motor de reglas (backend/procesamiento/diagnostico.py)
+    sobre todos los sensores del equipo, y el PDF generado a partir de el.
+
+    No envia correo ni Telegram todavia (ver Ideas futuras en PROYECTO.md).
+    """
+
+    __tablename__ = "reporte"
+
+    id = Column(Integer, primary_key=True)
+    equipo_id = Column(Integer, ForeignKey("equipo.id"), nullable=False)
+    fecha_generacion = Column(DateTime, default=datetime.utcnow)
+    # Hipotesis de falla, evidencias, confianza y limitaciones por sensor.
+    resultado = Column(JSON)
+    ruta_pdf = Column(String(500))
+
+    equipo = relationship("Equipo")

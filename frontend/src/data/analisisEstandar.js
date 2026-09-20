@@ -4,4 +4,5 @@ export const analisisEstandar = [
   { id: "curtosis", nombre: "Curtosis" },
   { id: "factor_cresta", nombre: "Factor de Cresta" },
   { id: "skewness", nombre: "Skewness" },
+  { id: "envolvente", nombre: "Rodamiento (envolvente)" },
 ]

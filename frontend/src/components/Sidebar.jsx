@@ -53,6 +53,7 @@ function Sidebar({
   vistaActiva,
   onIrAResumen,
   onIrAConfiguracion,
+  onIrAReportes,
   equipoActivoId,
   onSeleccionarEquipo,
 }) {
@@ -100,7 +101,11 @@ function Sidebar({
           </span>
         </button>
 
-        <button type="button">
+        <button
+          type="button"
+          className={vistaActiva === "reportes" ? "nav-item-activo" : ""}
+          onClick={onIrAReportes}
+        >
           <span className="nav-item-grupo">
             <span className="nav-item-icono">
               <IconoReportes />

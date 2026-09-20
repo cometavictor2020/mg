@@ -3,12 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.procesamiento.frecuencia import calcular_fft
-from backend.procesamiento.lectura_csv import leer_muestra_csv
+from backend.procesamiento.lectura_csv import leer_muestra_csv, leer_ventana_segundos
 from backend.procesamiento.estadisticos import calcular_estadisticos
+from backend.procesamiento.diagnostico import cargar_normativa
+from backend.procesamiento.diagnostico_rodamientos import (
+    calcular_datos_grafico,
+    evaluar_rodamiento,
+    geometria_completa,
+    serializar_datos_grafico,
+)
 from basedatos.conexion import SesionLocal
 from basedatos.modelos import Usuario, Sensor, Medicion
 from seguridad.auth import verificar_password, crear_token_acceso, obtener_usuario_actual
-from backend.api.administracion import usuarios, equipos, sensores, modelos_ml
+from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, tipos_sensor, reportes, rodamientos, mediciones
 
 
 app = FastAPI()
@@ -25,6 +32,10 @@ app.include_router(usuarios.router)
 app.include_router(equipos.router)
 app.include_router(sensores.router)
 app.include_router(modelos_ml.router)
+app.include_router(tipos_sensor.router)
+app.include_router(reportes.router)
+app.include_router(rodamientos.router)
+app.include_router(mediciones.router)
 
 
 def obtener_medicion_mas_reciente(sesion, equipo_id):
@@ -161,5 +172,63 @@ def obtener_estadisticos(equipo_id: int, usuario_actual: dict = Depends(obtener_
         )
 
         return calcular_estadisticos(datos)
+    finally:
+        sesion.close()
+
+
+@app.get("/api/envolvente")
+def obtener_envolvente(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """
+    Espectro de envolvente + señal cruda con su envolvente, para el
+    sensor con la medicion mas reciente de este equipo - mismos datos
+    que ya se calculan al generar un reporte (reportes.py), pero
+    disponibles sin tener que generar uno (D-043, ver PROYECTO.md).
+    """
+    sesion = SesionLocal()
+    try:
+        medicion = obtener_medicion_mas_reciente(sesion, equipo_id)
+        if not medicion:
+            raise HTTPException(status_code=404, detail="Este equipo no tiene mediciones registradas")
+
+        sensor = medicion.sensor
+        if not sensor.rodamiento:
+            raise HTTPException(
+                status_code=422,
+                detail="El sensor de este equipo no tiene un rodamiento vinculado (Configuración → Sensores).",
+            )
+
+        if not geometria_completa(sensor.rodamiento):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"El rodamiento {sensor.rodamiento.codigo} no tiene su geometría completa "
+                    "(Configuración → Rodamientos)."
+                ),
+            )
+
+        rpm_nominal = (sensor.equipo.atributos or {}).get("rpm_nominal")
+        if not rpm_nominal:
+            raise HTTPException(
+                status_code=422,
+                detail="El equipo no tiene RPM nominal registrado (Configuración → Equipos).",
+            )
+
+        datos_crudos = leer_ventana_segundos(
+            medicion.ruta_archivo_local, medicion.frecuencia_muestreo, duracion_segundos=2.0
+        )
+
+        normativa = cargar_normativa()
+        hipotesis = evaluar_rodamiento(
+            datos_crudos, medicion.frecuencia_muestreo, rpm_nominal, sensor.rodamiento, normativa
+        )
+        datos_grafico = calcular_datos_grafico(
+            datos_crudos, medicion.frecuencia_muestreo, rpm_nominal, sensor.rodamiento, hipotesis
+        )
+
+        return {
+            "rodamiento_codigo": sensor.rodamiento.codigo,
+            "hipotesis": hipotesis,
+            "grafico": serializar_datos_grafico(datos_grafico),
+        }
     finally:
         sesion.close()

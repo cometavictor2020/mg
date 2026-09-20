@@ -1,0 +1,103 @@
+.reporte-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.reporte-encabezado-acciones {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reporte-boton-cerrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+
+  border-radius: 6px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+  color: var(--color-texto-secundario);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.reporte-boton-cerrar:hover {
+  background: var(--color-fondo-principal);
+  color: var(--color-texto-principal);
+}
+
+.reporte-sensor {
+  margin-top: 16px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--color-borde);
+}
+
+.reporte-hipotesis {
+  margin: 10px 0;
+  padding: 10px 12px;
+
+  border-radius: 7px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+}
+
+.reporte-hipotesis-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-bottom: 4px;
+}
+
+.reporte-confianza {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.reporte-confianza-alta {
+  color: var(--color-critico);
+}
+
+.reporte-confianza-media {
+  color: var(--color-advertencia);
+}
+
+.reporte-confianza-baja {
+  color: var(--color-exito);
+}
+
+.reporte-limitaciones {
+  margin-top: 10px;
+  color: var(--color-texto-secundario);
+  font-size: 0.8rem;
+}
+
+.reporte-limitaciones summary {
+  cursor: pointer;
+  color: var(--color-texto-secundario);
+}
+
+.reporte-limitaciones ul {
+  margin: 8px 0 0 18px;
+}
+
+.reporte-grafico-rodamiento {
+  margin-top: 14px;
+  padding: 12px;
+
+  border-radius: 8px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+}

@@ -29,16 +29,28 @@ class EquipoEntrada(BaseModel):
     planta: Optional[str] = None
     estado: str = "normal"
     potencia_kw: Optional[float] = None
+    rpm_nominal: Optional[float] = None
+
+
+def construir_atributos(datos):
+    atributos = {}
+    if datos.potencia_kw is not None:
+        atributos["potencia_kw"] = datos.potencia_kw
+    if datos.rpm_nominal is not None:
+        atributos["rpm_nominal"] = datos.rpm_nominal
+    return atributos or None
 
 
 def serializar(equipo):
+    atributos = equipo.atributos or {}
     return {
         "id": equipo.id,
         "nombre": equipo.nombre,
         "tipo": equipo.tipo_equipo.nombre if equipo.tipo_equipo else None,
         "planta": equipo.planta.nombre if equipo.planta else None,
         "estado": equipo.estado,
-        "potencia_kw": (equipo.atributos or {}).get("potencia_kw"),
+        "potencia_kw": atributos.get("potencia_kw"),
+        "rpm_nominal": atributos.get("rpm_nominal"),
         "fecha_creacion": equipo.fecha_creacion,
     }
 
@@ -67,11 +79,7 @@ def crear_equipo(datos: EquipoEntrada):
             tipo_equipo_id=tipo_equipo.id,
             planta_id=planta.id if planta else None,
             estado=datos.estado,
-            atributos=(
-                {"potencia_kw": datos.potencia_kw}
-                if datos.potencia_kw is not None
-                else None
-            ),
+            atributos=construir_atributos(datos),
         )
         sesion.add(equipo)
         sesion.commit()
@@ -98,11 +106,7 @@ def actualizar_equipo(equipo_id: int, datos: EquipoEntrada):
         equipo.tipo_equipo_id = tipo_equipo.id
         equipo.planta_id = planta.id if planta else None
         equipo.estado = datos.estado
-        equipo.atributos = (
-            {"potencia_kw": datos.potencia_kw}
-            if datos.potencia_kw is not None
-            else None
-        )
+        equipo.atributos = construir_atributos(datos)
 
         sesion.commit()
         sesion.refresh(equipo)

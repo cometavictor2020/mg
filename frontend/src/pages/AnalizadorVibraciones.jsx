@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts"
 
+import GraficoEnvolvente from "../components/GraficoEnvolvente"
+import ModalCargaMedicion from "../components/ModalCargaMedicion"
 import Sidebar from "../components/Sidebar"
 import { dashboardDemo } from "../data/dashboardDemo"
 import { useEquiposReales } from "../hooks/useEquiposReales"
@@ -28,6 +30,7 @@ function AnalizadorVibraciones({
   onCerrarSesion,
   onIrAResumen,
   onIrAConfiguracion,
+  onIrAReportes,
   equipoInicialId,
 }) {
   const { equipos, cargando: cargandoEquipos } = useEquiposReales()
@@ -51,6 +54,10 @@ function AnalizadorVibraciones({
   const [datosEstadisticos, setDatosEstadisticos] = useState(
     ESTADISTICOS_VACIOS
   )
+  const [mostrandoCargaMedicion, setMostrandoCargaMedicion] = useState(false)
+  const [recargarContador, setRecargarContador] = useState(0)
+  const [datosEnvolvente, setDatosEnvolvente] = useState(null)
+  const [mensajeEnvolvente, setMensajeEnvolvente] = useState("")
 
   const equipoSeleccionado = useMemo(() => {
     return (
@@ -88,6 +95,8 @@ function AnalizadorVibraciones({
     setDatos([])
     setDatosFFT([])
     setDatosEstadisticos(ESTADISTICOS_VACIOS)
+    setDatosEnvolvente(null)
+    setMensajeEnvolvente("")
 
     function mensajeError(respuesta, generico) {
       return respuesta.status === 404
@@ -155,7 +164,26 @@ function AnalizadorVibraciones({
       .catch((error) => {
         setMensajeEstadisticos(error.message)
       })
-  }, [equipoSeleccionado])
+
+    apiFetch(`http://127.0.0.1:8000/api/envolvente?equipo_id=${idEquipo}`)
+      .then(async (respuesta) => {
+        if (!respuesta.ok) {
+          const detalle = await respuesta.json().catch(() => null)
+          throw new Error(
+            mensajeError(respuesta, detalle?.detail ?? "No fue posible obtener el espectro de envolvente")
+          )
+        }
+        return respuesta.json()
+      })
+      .then((respuestaEnvolvente) => {
+        setDatosEnvolvente(respuestaEnvolvente)
+        setMensajeEnvolvente("")
+      })
+      .catch((error) => {
+        setDatosEnvolvente(null)
+        setMensajeEnvolvente(error.message)
+      })
+  }, [equipoSeleccionado, recargarContador])
 
   function seleccionarEquipo(equipo) {
     setEquipoSeleccionadoId(equipo.id)
@@ -195,6 +223,7 @@ function AnalizadorVibraciones({
         vistaActiva="detalle"
         onIrAResumen={onIrAResumen}
         onIrAConfiguracion={onIrAConfiguracion}
+        onIrAReportes={onIrAReportes}
         equipoActivoId={equipoSeleccionado.id}
         onSeleccionarEquipo={seleccionarEquipo}
       />
@@ -251,12 +280,31 @@ function AnalizadorVibraciones({
                 </p>
               </div>
 
-              <span
-                className={`estado-principal estado-principal-${equipoSeleccionado.estado}`}
-              >
-                {equipoSeleccionado.descripcionEstado}
-              </span>
+              <div className="equipo-principal-acciones">
+                <span
+                  className={`estado-principal estado-principal-${equipoSeleccionado.estado}`}
+                >
+                  {equipoSeleccionado.descripcionEstado}
+                </span>
+
+                <button
+                  type="button"
+                  className="boton-cargar-datos"
+                  onClick={() => setMostrandoCargaMedicion(true)}
+                >
+                  Cargar datos
+                </button>
+              </div>
             </div>
+
+            {mostrandoCargaMedicion && (
+              <ModalCargaMedicion
+                equipoId={equipoSeleccionado.id}
+                equipoNombre={equipoSeleccionado.nombre}
+                onCerrar={() => setMostrandoCargaMedicion(false)}
+                onCargada={() => setRecargarContador((actual) => actual + 1)}
+              />
+            )}
 
             <div className="equipo-principal-datos">
               <article className="dato-equipo">
@@ -550,6 +598,32 @@ function AnalizadorVibraciones({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+            </section>
+          )}
+
+          {pestanaActiva === "envolvente" && (
+            <section className="tarjeta">
+              <h3>Rodamiento — espectro de envolvente</h3>
+
+              {mensajeEnvolvente && <p className="config-mensaje">{mensajeEnvolvente}</p>}
+
+              {datosEnvolvente?.grafico && (
+                <>
+                  {datosEnvolvente.hipotesis.length === 0 && (
+                    <p className="config-mensaje">
+                      No se encontraron hipótesis de falla con confianza suficiente.
+                    </p>
+                  )}
+                  {datosEnvolvente.hipotesis.map((h) => (
+                    <p key={h.falla} className="config-mensaje">
+                      <strong>{h.falla.replaceAll("_", " ")}</strong> — {Math.round(h.confianza * 100)}%
+                      de confianza. Evidencia: {h.evidencias.join(", ")}
+                    </p>
+                  ))}
+
+                  <GraficoEnvolvente grafico={datosEnvolvente.grafico} />
+                </>
+              )}
             </section>
           )}
         </main>

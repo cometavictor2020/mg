@@ -10,6 +10,7 @@ import "./styles/pestanas.css"
 import "./styles/login.css"
 import "./styles/resumen.css"
 import "./styles/configuracion.css"
+import "./styles/reportes.css"
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

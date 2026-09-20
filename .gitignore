@@ -17,8 +17,14 @@ __pycache__/
 # Archivos temporales de Office (bloqueo al abrir un documento)
 ~$*
 
-# Dataset sintetico de prueba (157 MB, supera el limite de GitHub, no se respalda)
-datos/datos_vibracion_motor.csv
+# Datos de vibracion (reales y sinteticos): pueden pesar decenas de MB
+# por captura (10 kHz x 3 ejes x hasta 60s = ~31 MB) y superan el limite
+# de GitHub - mismo criterio que respaldos/ y reportes/, carpeta
+# completa en vez de un nombre de archivo puntual.
+datos/
 
 # Respaldos de la base de datos (D-022: nunca via Git/GitHub)
 respaldos/
+
+# PDFs de reportes generados (datos, no codigo - mismo criterio que respaldos/)
+reportes/

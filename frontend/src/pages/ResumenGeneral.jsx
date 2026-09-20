@@ -91,7 +91,7 @@ function TarjetaEquipo({ equipo, onSeleccionar }) {
   )
 }
 
-function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConfiguracion }) {
+function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConfiguracion, onIrAReportes }) {
   const { equipos, cargando, error } = useEquiposReales()
 
   const conteos = useMemo(() => {
@@ -126,6 +126,7 @@ function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConf
       <Sidebar
         vistaActiva="resumen"
         onIrAResumen={() => {}}
+        onIrAReportes={onIrAReportes}
         onIrAConfiguracion={onIrAConfiguracion}
         equipoActivoId={null}
         onSeleccionarEquipo={onSeleccionarEquipo}

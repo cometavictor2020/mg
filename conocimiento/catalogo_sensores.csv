@@ -1,0 +1,56 @@
+Familia;Sensor;Nemonico;Parametros fisicos;Unidad tipica
+Vibracion;Acelerometro piezoelectrico IEPE/ICP;VIBPZO;Aceleracion dinamica;m/s2, cm/s2, g
+Vibracion;Acelerometro MEMS triaxial;VIBMEMS;Aceleracion en eje X, aceleracion en eje Y, aceleracion en eje Z;m/s2, g
+Vibracion;Sensor de velocidad de vibracion;VIBVEL;Velocidad vibratoria;mm/s, in/s
+Vibracion;Sensor de desplazamiento Eddy Current;VIBEDDY;Desplazamiento relativo del eje;um, mm, mils
+Vibracion;Sensor laser de desplazamiento;VIBLASER;Distancia, desplazamiento;um, mm
+Vibracion;Sensor de choque;VIBCHOQUE;Aceleracion de impacto;g, m/s2
+Rotacion;Tacometro optico;RPMOPT;Velocidad de giro;RPM, Hz
+Rotacion;Sensor Hall de RPM;RPMHALL;Velocidad de giro, pulsos;RPM, Hz, pulsos
+Rotacion;Encoder incremental;RPMENC;Pulsos por revolucion, posicion relativa;pulsos, conteos
+Rotacion;Keyphasor / sensor de fase;RPMFASE;Pulso de referencia angular;pulso, voltaje
+Temperatura;RTD PT100/PT1000;TEMPRTD;Temperatura;C, K
+Temperatura;Termopar;TEMPTC;Temperatura;C, K
+Temperatura;Termistor NTC/PTC;TEMPNTC;Temperatura;C, K
+Temperatura;Sensor infrarrojo puntual;TEMPIR;Radiacion infrarroja convertida a temperatura superficial;C
+Temperatura;Camara termografica;TEMPTERM;Radiacion infrarroja por pixel, temperatura por pixel;C por pixel
+Electrico;Transformador de corriente CT;ELECCT;Corriente alterna;A
+Electrico;Sensor Hall de corriente;ELECHALL;Corriente AC, corriente DC;A
+Electrico;Sensor de voltaje;ELECVOLT;Tension electrica;V
+Electrico;Analizador de calidad de energia;ELECPQ;Voltaje muestreado, corriente muestreada;V, A
+Electrico;Sensor de corriente de fuga;ELECFUGA;Corriente de fuga;mA, A
+Electrico;Sensor de aislamiento;ELECAISL;Resistencia de aislamiento;ohm, Mohm
+Electrico;Sensor de campo magnetico;ELECMAG;Densidad de flujo magnetico;T, mT, Gauss
+Ultrasonido;Sensor ultrasonico aereo;ULTRAAER;Presion acustica ultrasonica;dB, Pa, senal electrica
+Ultrasonido;Sensor ultrasonico de contacto;ULTRACONT;Vibracion ultrasonica en material, acustica ultrasonica en material;dB, uV, senal electrica
+Ultrasonido;Detector ultrasonico de fugas;ULTRAFUGA;Intensidad ultrasonica;dB, dBuV
+Emision acustica;Sensor AE piezoelectrico;EAPZO;Ondas elasticas transitorias;uV, mV, dB AE
+Acustica;Microfono industrial;ACUMIC;Presion sonora;Pa, dB SPL
+Aceite;Sensor de particulas ferrosas;ACEFERR;Presencia de particulas ferrosas, conteo de particulas ferrosas, tamano de particulas ferrosas;conteo, um, ppm
+Aceite;Sensor de particulas no ferrosas;ACENOFER;Presencia de particulas no ferrosas, conteo de particulas no ferrosas, tamano de particulas no ferrosas;conteo, um, ppm
+Aceite;Contador optico de particulas;ACEOPT;Cantidad de particulas, tamano de particulas;conteo/ml, um
+Aceite;Sensor de humedad en aceite;ACEHUM;Contenido de agua;ppm, porcentaje de saturacion
+Aceite;Sensor de viscosidad;ACEVISC;Viscosidad del lubricante;cSt, mPa.s
+Aceite;Sensor dielectrico de aceite;ACEDIEL;Constante dielectrica, permitividad;adimensional
+Aceite;Sensor de temperatura de aceite;ACETEMP;Temperatura del aceite;C
+Aceite;Sensor de presion de aceite;ACEPRES;Presion del aceite;bar, psi, Pa
+Aceite;Sensor de caudal de aceite;ACECAUD;Caudal del aceite;L/min, m3/h
+Presion;Transductor de presion;PRESTRANS;Presion;Pa, bar, psi
+Presion;Sensor de presion diferencial;PRESDIF;Diferencia de presion;Pa, bar, psi
+Presion;Sensor piezoelectrico de presion dinamica;PRESPZO;Presion dinamica, presion transitoria;Pa, bar, psi
+Flujo;Caudalimetro electromagnetico;FLUJOELEC;Velocidad de fluido conductor, caudal de fluido conductor;m/s, L/min, m3/h
+Flujo;Caudalimetro ultrasonico;FLUJOULT;Velocidad de fluido, caudal de fluido;m/s, L/min, m3/h
+Flujo;Caudalimetro Coriolis;FLUJOCOR;Caudal masico;kg/h, kg/s
+Flujo;Caudalimetro vortex;FLUJOVOR;Frecuencia de vortices, caudal;Hz, L/min, m3/h
+Mecanico;Sensor de torque;MECTORQ;Torque;N.m
+Mecanico;Galga extensometrica;MECGALGA;Deformacion unitaria;microstrain, strain
+Mecanico;LVDT;MECLVDT;Desplazamiento lineal;mm, um
+Mecanico;Inclinometro;MECINCL;Inclinacion;grados, radianes
+Mecanico;Giroscopio;MECGIRO;Velocidad angular;grados/s, rad/s
+Proximidad;Sensor inductivo;PROXIND;Presencia de objeto metalico, distancia a objeto metalico;ON/OFF, mm
+Proximidad;Sensor fotoelectrico;PROXFOTO;Presencia, interrupcion de haz;ON/OFF
+Hidraulica;Sensor de presion hidraulica;HIDPRES;Presion hidraulica;bar, psi
+Hidraulica;Sensor de caudal hidraulico;HIDCAUD;Caudal;L/min
+Hidraulica;Sensor de temperatura hidraulica;HIDTEMP;Temperatura del fluido;C
+Neumatica;Sensor de presion neumatica;NEUPRES;Presion de aire;bar, psi
+Neumatica;Sensor de caudal de aire;NEUCAUD;Caudal de aire;L/min, Nm3/h
