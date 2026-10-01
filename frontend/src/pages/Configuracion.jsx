@@ -182,11 +182,11 @@ function SeccionUsuarios() {
 function SeccionEquipos() {
   const { items, cargando, error, recargar } = useColeccion("/api/equipos")
   const [editandoId, setEditandoId] = useState(null)
-  const [form, setForm] = useState({ nombre: "", tipo: "", planta: "", estado: "normal", potencia_kw: "", rpm_nominal: "" })
+  const [form, setForm] = useState({ nombre: "", tipo: "", planta: "", estado: "normal", potencia_kw: "", rpm_nominal: "", tipo_soporte: "" })
   const [mensaje, setMensaje] = useState("")
 
   function limpiarForm() {
-    setForm({ nombre: "", tipo: "", planta: "", estado: "normal", potencia_kw: "", rpm_nominal: "" })
+    setForm({ nombre: "", tipo: "", planta: "", estado: "normal", potencia_kw: "", rpm_nominal: "", tipo_soporte: "" })
     setEditandoId(null)
   }
 
@@ -199,6 +199,7 @@ function SeccionEquipos() {
       estado: equipo.estado,
       potencia_kw: equipo.potencia_kw ?? "",
       rpm_nominal: equipo.rpm_nominal ?? "",
+      tipo_soporte: equipo.tipo_soporte ?? "",
     })
   }
 
@@ -211,6 +212,7 @@ function SeccionEquipos() {
       potencia_kw: form.potencia_kw === "" ? null : Number(form.potencia_kw),
       rpm_nominal: form.rpm_nominal === "" ? null : Number(form.rpm_nominal),
       planta: form.planta === "" ? null : form.planta,
+      tipo_soporte: form.tipo_soporte === "" ? null : form.tipo_soporte,
     }
 
     try {
@@ -285,6 +287,18 @@ function SeccionEquipos() {
         </div>
 
         <div className="config-form-campo">
+          <label>Tipo de soporte (opcional, para severidad ISO 20816-3)</label>
+          <select
+            value={form.tipo_soporte}
+            onChange={(e) => setForm({ ...form, tipo_soporte: e.target.value })}
+          >
+            <option value="">No especificado</option>
+            <option value="rigido">Rígido</option>
+            <option value="flexible">Flexible</option>
+          </select>
+        </div>
+
+        <div className="config-form-campo">
           <label>Estado</label>
           <select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>
             <option value="normal">Normal</option>
@@ -319,6 +333,7 @@ function SeccionEquipos() {
             <th>Planta</th>
             <th>Potencia</th>
             <th>RPM nominal</th>
+            <th>Soporte</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -331,6 +346,7 @@ function SeccionEquipos() {
               <td>{equipo.planta ?? "—"}</td>
               <td>{equipo.potencia_kw !== null ? `${equipo.potencia_kw} kW` : "—"}</td>
               <td>{equipo.rpm_nominal !== null ? `${equipo.rpm_nominal} RPM` : "—"}</td>
+              <td>{equipo.tipo_soporte === "rigido" ? "Rígido" : equipo.tipo_soporte === "flexible" ? "Flexible" : "—"}</td>
               <td>{equipo.estado}</td>
               <td className="config-tabla-acciones">
                 <button type="button" onClick={() => editar(equipo)}>Editar</button>
@@ -356,6 +372,41 @@ const FORM_SENSOR_VACIO = {
   estado: "activo",
   ubicacion: "",
   rodamiento_id: "",
+  orientacion_ejes: {},
+}
+
+const OPCIONES_ORIENTACION = [
+  { valor: "", etiqueta: "No especificado" },
+  { valor: "radial_horizontal", etiqueta: "Radial horizontal" },
+  { valor: "radial_vertical", etiqueta: "Radial vertical" },
+  { valor: "axial", etiqueta: "Axial" },
+]
+
+// Unidades estandar para la familia "Vibracion" (D-052, ver PROYECTO.md) -
+// el mismo vocabulario ya curado en conocimiento/catalogo_sensores.csv, y
+// las unicas que backend/procesamiento/severidad_iso.py reconoce para
+// aceleracion/velocidad (desplazamiento se deja disponible para el
+// catalogo aunque todavia no lo consume ningun calculo). Elegirlas con el
+// mouse (en vez de texto libre) evita que un typo (ej. "mm/seg" en vez de
+// "mm/s") haga que una medicion real quede con una unidad no reconocida.
+const UNIDADES_VIBRACION_ESTANDAR = {
+  "Aceleración": ["m/s2", "cm/s2", "g"],
+  "Velocidad": ["mm/s", "in/s"],
+  "Desplazamiento": ["um", "mm", "mils"],
+}
+
+const ABREVIATURA_ORIENTACION = {
+  radial_horizontal: "rad.H",
+  radial_vertical: "rad.V",
+  axial: "axial",
+}
+
+function formatearOrientacion(orientacionEjes) {
+  const entradas = Object.entries(orientacionEjes ?? {})
+  if (entradas.length === 0) return "—"
+  return entradas
+    .map(([eje, orientacion]) => `${eje.toUpperCase()}:${ABREVIATURA_ORIENTACION[orientacion] ?? orientacion}`)
+    .join(", ")
 }
 
 function derivarEjes(parametrosFisicos) {
@@ -366,6 +417,18 @@ function derivarEjes(parametrosFisicos) {
   }
 
   return ["X"]
+}
+
+// Los tipos del catalogo curado (conocimiento/catalogo_sensores.csv) ya
+// vienen con familia "Vibracion", pero los tipos creados a mano antes de
+// D-034 (D-038) quedan en familia "Personalizado" (D-034) aunque
+// fisicamente sean sensores de vibracion - por eso no basta con mirar la
+// familia, hay que revisar tambien parametros_fisicos (mismo criterio que
+// ya usa derivarEjes()).
+function esTipoVibracion(tipoSensor) {
+  if (tipoSensor.familia === "Vibracion") return true
+  const texto = (tipoSensor.parametros_fisicos ?? "").toLowerCase()
+  return texto.includes("aceleracion") || texto.includes("velocidad vibratoria") || texto.includes("vibracion")
 }
 
 function SeccionSensores() {
@@ -426,6 +489,7 @@ function SeccionSensores() {
       estado: sensor.estado,
       ubicacion: sensor.ubicacion ?? "",
       rodamiento_id: sensor.rodamiento_id ? String(sensor.rodamiento_id) : "",
+      orientacion_ejes: sensor.orientacion_ejes ?? {},
     })
     setMostrandoCrearTipo(false)
   }
@@ -439,6 +503,19 @@ function SeccionSensores() {
           ? actual.unidades_seleccionadas.filter((u) => u !== unidad)
           : [...actual.unidades_seleccionadas, unidad],
       }
+    })
+  }
+
+  function cambiarOrientacionEje(eje, valor) {
+    setForm((actual) => {
+      const clave = eje.toLowerCase()
+      const siguiente = { ...actual.orientacion_ejes }
+      if (valor === "") {
+        delete siguiente[clave]
+      } else {
+        siguiente[clave] = valor
+      }
+      return { ...actual, orientacion_ejes: siguiente }
     })
   }
 
@@ -477,6 +554,24 @@ function SeccionSensores() {
       )
       await recargarTipos()
       setNuevaUnidad("")
+    } catch (err) {
+      setMensaje(err.message)
+    }
+  }
+
+  async function agregarUnidadEstandar(evento) {
+    const unidad = evento.target.value
+    evento.target.value = ""
+    if (!tipoSeleccionado || !unidad) return
+
+    setMensaje("")
+    try {
+      await enviarJSON(
+        `${URL_BASE}/api/tipos-sensor/${tipoSeleccionado.id}/unidades`,
+        "POST",
+        { unidad }
+      )
+      await recargarTipos()
     } catch (err) {
       setMensaje(err.message)
     }
@@ -643,16 +738,57 @@ function SeccionSensores() {
               )}
             </div>
 
-            <div className="config-form-acciones">
-              <input
-                value={nuevaUnidad}
-                onChange={(e) => setNuevaUnidad(e.target.value)}
-                placeholder="Agregar otra unidad a este tipo (ej: in/s)"
-              />
-              <button type="button" className="config-boton-secundario" onClick={agregarUnidad}>
-                Agregar unidad
-              </button>
-            </div>
+            {esTipoVibracion(tipoSeleccionado) ? (
+              <div className="config-form-acciones">
+                <select value="" onChange={agregarUnidadEstandar}>
+                  <option value="" disabled>Agregar unidad estándar de vibración…</option>
+                  {Object.entries(UNIDADES_VIBRACION_ESTANDAR).map(([categoria, unidades]) => {
+                    const pendientes = unidades.filter(
+                      (u) => !(tipoSeleccionado.unidades_disponibles ?? []).includes(u)
+                    )
+                    if (pendientes.length === 0) return null
+                    return (
+                      <optgroup key={categoria} label={categoria}>
+                        {pendientes.map((u) => <option key={u} value={u}>{u}</option>)}
+                      </optgroup>
+                    )
+                  })}
+                </select>
+              </div>
+            ) : (
+              <div className="config-form-acciones">
+                <input
+                  value={nuevaUnidad}
+                  onChange={(e) => setNuevaUnidad(e.target.value)}
+                  placeholder="Agregar otra unidad a este tipo (ej: %HR)"
+                />
+                <button type="button" className="config-boton-secundario" onClick={agregarUnidad}>
+                  Agregar unidad
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tipoSeleccionado && (
+          <div className="config-form-campo config-form-campo-ancho config-subformulario">
+            <label>
+              Orientación de cada eje (opcional — para distinguir vibración radial de axial en el
+              diagnóstico, D-051)
+            </label>
+            {derivarEjes(tipoSeleccionado.parametros_fisicos).map((eje) => (
+              <div key={eje} className="config-form-campo">
+                <label>Eje {eje}</label>
+                <select
+                  value={form.orientacion_ejes[eje.toLowerCase()] ?? ""}
+                  onChange={(e) => cambiarOrientacionEje(eje, e.target.value)}
+                >
+                  {OPCIONES_ORIENTACION.map((opcion) => (
+                    <option key={opcion.valor} value={opcion.valor}>{opcion.etiqueta}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
           </div>
         )}
 
@@ -717,6 +853,7 @@ function SeccionSensores() {
             <th>Rodamiento</th>
             <th>Unidad(es)</th>
             <th>Ejes</th>
+            <th>Orientación</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -732,6 +869,7 @@ function SeccionSensores() {
               <td>{sensor.rodamiento_codigo ?? "—"}</td>
               <td>{(sensor.unidades ?? []).join(", ") || "—"}</td>
               <td>{(sensor.ejes ?? []).join(", ") || "—"}</td>
+              <td>{formatearOrientacion(sensor.orientacion_ejes)}</td>
               <td>{sensor.estado}</td>
               <td className="config-tabla-acciones">
                 <button type="button" onClick={() => editar(sensor)}>Editar</button>
@@ -1117,7 +1255,7 @@ const PESTANAS = [
   { id: "modelos", nombre: "Modelos de Aprendizaje" },
 ]
 
-function Configuracion({ sesion, onCerrarSesion, onIrAResumen, onIrAReportes, onSeleccionarEquipo }) {
+function Configuracion({ sesion, onCerrarSesion, onIrAResumen, onIrAReportes, onIrALaboratorio, onSeleccionarEquipo }) {
   const [pestanaActiva, setPestanaActiva] = useState("usuarios")
 
   const iniciales = sesion.usuario.nombre
@@ -1134,6 +1272,7 @@ function Configuracion({ sesion, onCerrarSesion, onIrAResumen, onIrAReportes, on
         onIrAResumen={onIrAResumen}
         onIrAConfiguracion={() => {}}
         onIrAReportes={onIrAReportes}
+        onIrALaboratorio={onIrALaboratorio}
         equipoActivoId={null}
         onSeleccionarEquipo={onSeleccionarEquipo}
       />

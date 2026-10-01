@@ -1236,6 +1236,22 @@ configuracion_motor_reglas:
     politica: "no_inferir"
     registrar_feature_no_disponible: true
 
+  # direccion_radial_axial: umbrales para las evidencias "direccion_radial"
+  # y "vibracion_axial" de las reglas desbalanceo/desalineacion_angular/
+  # desalineacion_paralela (seccion 6). A diferencia del resto de este
+  # archivo, estos numeros NO provienen de una norma ISO especifica -
+  # ninguna de las 12 normas citadas (seccion 3) trae una cifra concreta
+  # para esta comparacion, y el archivo declara explicitamente
+  # texto_iso_incrustado: false (no se reproduce texto de normas pagadas).
+  # Son una regla de practica general de analisis de vibraciones
+  # (formacion de analistas categoria ISO 18436-2), PENDIENTE de
+  # validacion con el profesor guia o una fuente normativa citable -
+  # ver R-003 en PROYECTO.md. No tratar como cita ISO.
+  direccion_radial_axial:
+    fuente: "practica_general_no_iso_especifica_pendiente_validacion"
+    ratio_minimo_radial_sobre_axial_para_predominante: 1.5
+    ratio_minimo_axial_sobre_radial_para_muy_elevada: 1.0
+
 # -----------------------------------------------------------------------------
 # 15. TRAZABILIDAD
 # -----------------------------------------------------------------------------

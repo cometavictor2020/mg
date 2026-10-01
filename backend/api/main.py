@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,7 +17,7 @@ from backend.procesamiento.diagnostico_rodamientos import (
 from basedatos.conexion import SesionLocal
 from basedatos.modelos import Usuario, Sensor, Medicion
 from seguridad.auth import verificar_password, crear_token_acceso, obtener_usuario_actual
-from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, tipos_sensor, reportes, rodamientos, mediciones
+from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, tipos_sensor, reportes, rodamientos, mediciones, laboratorio, laboratorio_pso, alertas, analizador_pso
 
 
 app = FastAPI()
@@ -36,6 +38,10 @@ app.include_router(tipos_sensor.router)
 app.include_router(reportes.router)
 app.include_router(rodamientos.router)
 app.include_router(mediciones.router)
+app.include_router(laboratorio.router)
+app.include_router(laboratorio_pso.router)
+app.include_router(alertas.router)
+app.include_router(analizador_pso.router)
 
 
 def obtener_medicion_mas_reciente(sesion, equipo_id):
@@ -43,6 +49,30 @@ def obtener_medicion_mas_reciente(sesion, equipo_id):
         sesion.query(Medicion)
         .join(Sensor, Medicion.sensor_id == Sensor.id)
         .filter(Sensor.equipo_id == equipo_id)
+        .order_by(Medicion.fecha_captura.desc())
+        .first()
+    )
+
+
+def obtener_medicion(sesion, equipo_id, sensor_id):
+    """
+    Si se indica sensor_id (selector de sensor/rodamiento en el
+    frontend), usa la medicion mas reciente de ESE sensor puntual -
+    validando que pertenezca al equipo pedido, para no mostrar datos de
+    un sensor de otro equipo. Sin sensor_id, mantiene el comportamiento
+    anterior (medicion mas reciente entre todos los sensores del
+    equipo) para no romper otros posibles llamadores.
+    """
+    if sensor_id is None:
+        return obtener_medicion_mas_reciente(sesion, equipo_id)
+
+    sensor = sesion.query(Sensor).filter(Sensor.id == sensor_id, Sensor.equipo_id == equipo_id).first()
+    if not sensor:
+        return None
+
+    return (
+        sesion.query(Medicion)
+        .filter(Medicion.sensor_id == sensor_id)
         .order_by(Medicion.fecha_captura.desc())
         .first()
     )
@@ -99,10 +129,12 @@ def inicio():
 
 
 @app.get("/api/datos")
-def obtener_datos(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+def obtener_datos(
+    equipo_id: int, sensor_id: Optional[int] = None, usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     sesion = SesionLocal()
     try:
-        medicion = obtener_medicion_mas_reciente(sesion, equipo_id)
+        medicion = obtener_medicion(sesion, equipo_id, sensor_id)
         if not medicion:
             raise HTTPException(
                 status_code=404,
@@ -124,30 +156,51 @@ def obtener_datos(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario
 
 
 @app.get("/api/fft")
-def obtener_fft(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+def obtener_fft(
+    equipo_id: int,
+    sensor_id: Optional[int] = None,
+    rango_completo: bool = False,
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    """
+    rango_completo=False (por defecto): comportamiento de siempre - 1000
+    filas fijas, tope 300 Hz. rango_completo=True (D-049, ver
+    PROYECTO.md): lee una ventana de 2s (igual que /api/envolvente,
+    D-039) y sube el tope hasta el Nyquist real de la medicion (fs/2) -
+    para ver los picos de alta frecuencia (resonancias) que el tope de
+    300 Hz nunca mostraba. El frontend no necesita saber de antemano la
+    frecuencia de muestreo del sensor: el Nyquist se calcula aca.
+    """
     sesion = SesionLocal()
     try:
-        medicion = obtener_medicion_mas_reciente(sesion, equipo_id)
+        medicion = obtener_medicion(sesion, equipo_id, sensor_id)
         if not medicion:
             raise HTTPException(
                 status_code=404,
                 detail="Este equipo no tiene mediciones registradas",
             )
 
-        datos = leer_muestra_csv(
-            medicion.ruta_archivo_local,
-            cantidad_filas=1000,
-        )
+        if rango_completo:
+            datos = leer_ventana_segundos(
+                medicion.ruta_archivo_local, medicion.frecuencia_muestreo, duracion_segundos=2.0
+            )
+            frecuencia_maxima = medicion.frecuencia_muestreo / 2
+        else:
+            datos = leer_muestra_csv(
+                medicion.ruta_archivo_local,
+                cantidad_filas=1000,
+            )
+            frecuencia_maxima = 300
 
         resultado_fft = calcular_fft(
             datos=datos,
             frecuencia_muestreo=medicion.frecuencia_muestreo,
-            frecuencia_maxima=300,
+            frecuencia_maxima=frecuencia_maxima,
         )
 
         return {
             "frecuencia_muestreo": medicion.frecuencia_muestreo,
-            "frecuencia_maxima": 300,
+            "frecuencia_maxima": frecuencia_maxima,
             "cantidad_puntos": len(resultado_fft),
             "datos": resultado_fft,
         }
@@ -156,10 +209,12 @@ def obtener_fft(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_a
 
 
 @app.get("/api/estadisticos")
-def obtener_estadisticos(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+def obtener_estadisticos(
+    equipo_id: int, sensor_id: Optional[int] = None, usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     sesion = SesionLocal()
     try:
-        medicion = obtener_medicion_mas_reciente(sesion, equipo_id)
+        medicion = obtener_medicion(sesion, equipo_id, sensor_id)
         if not medicion:
             raise HTTPException(
                 status_code=404,
@@ -177,16 +232,19 @@ def obtener_estadisticos(equipo_id: int, usuario_actual: dict = Depends(obtener_
 
 
 @app.get("/api/envolvente")
-def obtener_envolvente(equipo_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+def obtener_envolvente(
+    equipo_id: int, sensor_id: Optional[int] = None, usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     """
     Espectro de envolvente + señal cruda con su envolvente, para el
-    sensor con la medicion mas reciente de este equipo - mismos datos
-    que ya se calculan al generar un reporte (reportes.py), pero
-    disponibles sin tener que generar uno (D-043, ver PROYECTO.md).
+    sensor elegido en el selector (o, sin sensor_id, el que tenga la
+    medicion mas reciente del equipo) - mismos datos que ya se calculan
+    al generar un reporte (reportes.py), pero disponibles sin tener que
+    generar uno (D-043, ver PROYECTO.md).
     """
     sesion = SesionLocal()
     try:
-        medicion = obtener_medicion_mas_reciente(sesion, equipo_id)
+        medicion = obtener_medicion(sesion, equipo_id, sensor_id)
         if not medicion:
             raise HTTPException(status_code=404, detail="Este equipo no tiene mediciones registradas")
 

@@ -35,6 +35,21 @@ function IconoReportes() {
   )
 }
 
+function IconoLaboratorio() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M6.2 1.5h3.6M6.7 1.5v4l-3.3 6.2c-.5 1 .2 2.3 1.4 2.3h6.4c1.2 0 1.9-1.3 1.4-2.3L9.3 5.5v-4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M4.8 9.5h6.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function IconoConfiguracion() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -54,6 +69,7 @@ function Sidebar({
   onIrAResumen,
   onIrAConfiguracion,
   onIrAReportes,
+  onIrALaboratorio,
   equipoActivoId,
   onSeleccionarEquipo,
 }) {
@@ -111,6 +127,19 @@ function Sidebar({
               <IconoReportes />
             </span>
             Reportes
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={vistaActiva === "laboratorio" ? "nav-item-activo" : ""}
+          onClick={onIrALaboratorio}
+        >
+          <span className="nav-item-grupo">
+            <span className="nav-item-icono">
+              <IconoLaboratorio />
+            </span>
+            Laboratorio
           </span>
         </button>
 

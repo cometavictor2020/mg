@@ -78,6 +78,59 @@
   color: var(--color-exito);
 }
 
+.reporte-severidad-iso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+
+  border-radius: 7px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+  font-size: 0.82rem;
+}
+
+.reporte-severidad-iso-zona {
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.reporte-severidad-iso-zona-a {
+  background: var(--color-exito);
+}
+
+.reporte-severidad-iso-zona-b {
+  background: var(--color-exito);
+}
+
+.reporte-severidad-iso-zona-c {
+  background: var(--color-advertencia);
+}
+
+.reporte-severidad-iso-zona-d {
+  background: var(--color-critico);
+}
+
+.reporte-severidad-iso-no-aplicable {
+  color: var(--color-texto-secundario);
+  font-style: italic;
+}
+
+.reporte-calidad-medicion {
+  margin: 0 0 10px;
+  padding: 6px 12px;
+
+  border-radius: 7px;
+  border: 1px dashed var(--color-advertencia);
+  color: var(--color-advertencia);
+  font-size: 0.78rem;
+}
+
 .reporte-limitaciones {
   margin-top: 10px;
   color: var(--color-texto-secundario);

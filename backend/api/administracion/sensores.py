@@ -24,6 +24,9 @@ router = APIRouter(
 )
 
 
+VALORES_ORIENTACION_VALIDOS = {"radial_horizontal", "radial_vertical", "axial"}
+
+
 class SensorEntrada(BaseModel):
     equipo_id: int
     tipo_sensor_id: int
@@ -31,6 +34,11 @@ class SensorEntrada(BaseModel):
     estado: str = "activo"
     ubicacion: Optional[str] = None
     rodamiento_id: Optional[int] = None
+    # {"x": "radial_horizontal", "y": "radial_vertical", "z": "axial"} -
+    # opcional, una entrada por cada eje que el sensor realmente tenga
+    # (ver derivar_ejes). Sin ella, el motor de diagnostico sigue
+    # funcionando igual que hoy (D-051, ver PROYECTO.md).
+    orientacion_ejes: Optional[dict[str, str]] = None
 
 
 def derivar_ejes(parametros_fisicos):
@@ -60,6 +68,7 @@ def serializar(sensor):
         "familia": sensor.tipo_sensor.familia if sensor.tipo_sensor else None,
         "unidades": configuracion.get("unidades", []),
         "ejes": configuracion.get("ejes", []),
+        "orientacion_ejes": configuracion.get("orientacion_ejes"),
         "ubicacion": sensor.ubicacion,
         "rodamiento_id": sensor.rodamiento_id,
         "rodamiento_codigo": sensor.rodamiento.codigo if sensor.rodamiento else None,
@@ -102,6 +111,36 @@ def validar_rodamiento(sesion, equipo_id, rodamiento_id):
     return rodamiento
 
 
+def validar_orientacion_ejes(orientacion_ejes, ejes_del_sensor):
+    """
+    orientacion_ejes: {"x": "radial_horizontal", ...} o None (no
+    declarada - el sistema sigue funcionando igual que hoy, D-051).
+    Cada clave debe ser uno de los ejes reales del sensor (en
+    minuscula, para calzar con backend/procesamiento/diagnostico.py::
+    EJES) y cada valor uno de VALORES_ORIENTACION_VALIDOS.
+    """
+    if not orientacion_ejes:
+        return None
+
+    ejes_validos = {eje.lower() for eje in ejes_del_sensor}
+    for eje, orientacion in orientacion_ejes.items():
+        if eje.lower() not in ejes_validos:
+            raise HTTPException(
+                status_code=422,
+                detail=f"El eje '{eje}' no corresponde a este sensor (ejes válidos: {', '.join(ejes_del_sensor)})",
+            )
+        if orientacion not in VALORES_ORIENTACION_VALIDOS:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Orientación no válida para el eje '{eje}': '{orientacion}' — valores "
+                    f"aceptados: {', '.join(sorted(VALORES_ORIENTACION_VALIDOS))}."
+                ),
+            )
+
+    return {eje.lower(): orientacion for eje, orientacion in orientacion_ejes.items()}
+
+
 def construir_configuracion(sesion, datos):
     tipo_sensor = (
         sesion.query(TipoSensor)
@@ -119,10 +158,15 @@ def construir_configuracion(sesion, datos):
             detail=f"Unidad(es) no disponible(s) para este tipo de sensor: {', '.join(invalidas)}",
         )
 
+    ejes = derivar_ejes(tipo_sensor.parametros_fisicos)
+    orientacion_ejes = validar_orientacion_ejes(datos.orientacion_ejes, ejes)
+
     configuracion = {
         "unidades": datos.unidades_seleccionadas,
-        "ejes": derivar_ejes(tipo_sensor.parametros_fisicos),
+        "ejes": ejes,
     }
+    if orientacion_ejes:
+        configuracion["orientacion_ejes"] = orientacion_ejes
     return tipo_sensor, configuracion
 
 

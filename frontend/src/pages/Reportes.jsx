@@ -23,6 +23,42 @@ function nivelConfianza(confianza) {
   return "baja"
 }
 
+function SeveridadIso({ severidad }) {
+  if (!severidad) return null
+
+  if (!severidad.aplicable) {
+    return (
+      <p className="reporte-severidad-iso-no-aplicable">
+        Severidad ISO 20816-3: no evaluable — {severidad.motivo_no_aplicable}
+      </p>
+    )
+  }
+
+  return (
+    <div className="reporte-severidad-iso">
+      <span>Severidad ISO 20816-3:</span>
+      <span className={`reporte-severidad-iso-zona reporte-severidad-iso-zona-${severidad.zona.toLowerCase()}`}>
+        Zona {severidad.zona}
+      </span>
+      <span>{severidad.severidad?.replaceAll("_", " ")}</span>
+      <span className="config-mensaje">
+        ({severidad.velocidad_rms_mm_s?.toFixed(2)} mm/s RMS, {severidad.grupo?.replace("_", " ")}, soporte {severidad.tipo_soporte})
+      </span>
+    </div>
+  )
+}
+
+function CalidadMedicion({ calidad }) {
+  if (!calidad || calidad.estado === "valida") return null
+
+  const mensajes = [...calidad.criticas, ...calidad.advertencias]
+  return (
+    <p className="reporte-calidad-medicion">
+      Calidad de medición (ISO 13373-1) — {calidad.estado.replaceAll("_", " ")}: {mensajes.join(" ")}
+    </p>
+  )
+}
+
 function TarjetaSensor({ sensor }) {
   return (
     <article className="tarjeta reporte-sensor">
@@ -32,6 +68,9 @@ function TarjetaSensor({ sensor }) {
 
       {sensor.tiene_medicion && (
         <>
+          <SeveridadIso severidad={sensor.diagnostico.severidad_iso} />
+          <CalidadMedicion calidad={sensor.diagnostico.calidad_medicion} />
+
           {sensor.diagnostico.hipotesis.length === 0 && (
             <p className="config-mensaje">
               No se encontraron hipótesis de falla con confianza suficiente.
@@ -92,7 +131,7 @@ async function descargarPdf(reporteId, nombreEquipo) {
   URL.revokeObjectURL(url)
 }
 
-function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, onSeleccionarEquipo }) {
+function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, onIrALaboratorio, onSeleccionarEquipo }) {
   const { equipos } = useEquiposReales()
 
   const [equipoId, setEquipoId] = useState("")
@@ -102,6 +141,7 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
 
   const [historial, setHistorial] = useState([])
   const [cargandoHistorial, setCargandoHistorial] = useState(true)
+  const [seleccionados, setSeleccionados] = useState(new Set())
 
   function cargarHistorial() {
     setCargandoHistorial(true)
@@ -159,6 +199,39 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
     cargarHistorial()
   }
 
+  function alternarSeleccion(id) {
+    setSeleccionados((actual) => {
+      const siguiente = new Set(actual)
+      if (siguiente.has(id)) {
+        siguiente.delete(id)
+      } else {
+        siguiente.add(id)
+      }
+      return siguiente
+    })
+  }
+
+  function alternarSeleccionarTodos() {
+    setSeleccionados((actual) =>
+      actual.size === historial.length ? new Set() : new Set(historial.map((r) => r.id))
+    )
+  }
+
+  async function eliminarSeleccionados() {
+    const cantidad = seleccionados.size
+    if (cantidad === 0) return
+    if (!window.confirm(`¿Eliminar los ${cantidad} reportes seleccionados? Esta acción no se puede deshacer.`)) {
+      return
+    }
+    await apiFetch(`${URL_BASE}/api/reportes/eliminar-lote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reporte_ids: [...seleccionados] }),
+    })
+    setSeleccionados(new Set())
+    cargarHistorial()
+  }
+
   const iniciales = sesion.usuario.nombre
     .split(" ")
     .map((parte) => parte[0])
@@ -173,6 +246,7 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
         onIrAResumen={onIrAResumen}
         onIrAConfiguracion={onIrAConfiguracion}
         onIrAReportes={() => {}}
+        onIrALaboratorio={onIrALaboratorio}
         equipoActivoId={null}
         onSeleccionarEquipo={onSeleccionarEquipo}
       />
@@ -271,7 +345,14 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
           )}
 
           <section className="tarjeta">
-            <h3>Historial de reportes</h3>
+            <div className="reporte-encabezado">
+              <h3>Historial de reportes</h3>
+              {seleccionados.size > 0 && (
+                <button type="button" className="config-boton-secundario" onClick={eliminarSeleccionados}>
+                  Eliminar seleccionados ({seleccionados.size})
+                </button>
+              )}
+            </div>
 
             {cargandoHistorial && <p className="config-mensaje">Cargando…</p>}
 
@@ -283,6 +364,16 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
               <table className="config-tabla">
                 <thead>
                   <tr>
+                    <th>
+                      <label className="config-checkbox" title="Seleccionar todos">
+                        <input
+                          type="checkbox"
+                          checked={historial.length > 0 && seleccionados.size === historial.length}
+                          onChange={alternarSeleccionarTodos}
+                        />
+                        Todos
+                      </label>
+                    </th>
                     <th>Equipo</th>
                     <th>Fecha</th>
                     <th>Hipótesis</th>
@@ -292,6 +383,13 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
                 <tbody>
                   {historial.map((reporte) => (
                     <tr key={reporte.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={seleccionados.has(reporte.id)}
+                          onChange={() => alternarSeleccion(reporte.id)}
+                        />
+                      </td>
                       <td>{reporte.equipo_nombre}</td>
                       <td>{new Date(reporte.fecha_generacion).toLocaleString()}</td>
                       <td>{reporte.cantidad_hipotesis}</td>

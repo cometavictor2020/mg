@@ -91,7 +91,7 @@ function TarjetaEquipo({ equipo, onSeleccionar }) {
   )
 }
 
-function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConfiguracion, onIrAReportes }) {
+function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConfiguracion, onIrAReportes, onIrALaboratorio }) {
   const { equipos, cargando, error } = useEquiposReales()
 
   const conteos = useMemo(() => {
@@ -128,6 +128,7 @@ function ResumenGeneral({ sesion, onCerrarSesion, onSeleccionarEquipo, onIrAConf
         onIrAResumen={() => {}}
         onIrAReportes={onIrAReportes}
         onIrAConfiguracion={onIrAConfiguracion}
+        onIrALaboratorio={onIrALaboratorio}
         equipoActivoId={null}
         onSeleccionarEquipo={onSeleccionarEquipo}
       />

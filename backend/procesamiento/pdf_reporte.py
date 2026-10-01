@@ -177,6 +177,31 @@ def generar_pdf_reporte(reporte, graficos_rodamiento=None):
 
         diagnostico = sensor["diagnostico"]
 
+        severidad_iso = diagnostico.get("severidad_iso")
+        if severidad_iso and severidad_iso["aplicable"]:
+            elementos.append(Paragraph(
+                f"<b>Severidad ISO 20816-3:</b> Zona {severidad_iso['zona']} "
+                f"({severidad_iso['severidad']}) — velocidad RMS {severidad_iso['velocidad_rms_mm_s']:.2f} mm/s "
+                f"· {severidad_iso['accion_recomendada'].replace('_', ' ')}",
+                estilo_normal,
+            ))
+        elif severidad_iso:
+            elementos.append(Paragraph(
+                f"<b>Severidad ISO 20816-3:</b> no evaluable — {severidad_iso['motivo_no_aplicable']}",
+                estilo_normal,
+            ))
+
+        calidad_medicion = diagnostico.get("calidad_medicion")
+        if calidad_medicion and calidad_medicion["estado"] != "valida":
+            mensajes = calidad_medicion["criticas"] + calidad_medicion["advertencias"]
+            elementos.append(Paragraph(
+                f"<b>Calidad de medición (ISO 13373-1):</b> {calidad_medicion['estado'].replace('_', ' ')} — "
+                + " ".join(mensajes),
+                estilo_normal,
+            ))
+
+        elementos.append(Spacer(1, 0.2 * cm))
+
         if sensor.get("datos_fft"):
             imagen = graficar_espectro(sensor["datos_fft"], diagnostico["frecuencias_esperadas"])
             elementos.append(Image(imagen, width=17 * cm, height=17 * cm * 7 / 16))

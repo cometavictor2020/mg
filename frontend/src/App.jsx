@@ -5,6 +5,7 @@ import ResumenGeneral from "./pages/ResumenGeneral"
 import AnalizadorVibraciones from "./pages/AnalizadorVibraciones"
 import Configuracion from "./pages/Configuracion"
 import Reportes from "./pages/Reportes"
+import Laboratorio from "./pages/Laboratorio"
 import { obtenerSesion, guardarSesion, borrarSesion } from "./utils/sesion"
 
 function App() {
@@ -48,6 +49,10 @@ function App() {
     setVista("reportes")
   }
 
+  function irALaboratorio() {
+    setVista("laboratorio")
+  }
+
   if (cargandoSesion) {
     return null
   }
@@ -64,6 +69,7 @@ function App() {
         onIrAResumen={irAResumen}
         onIrAConfiguracion={irAConfiguracion}
         onIrAReportes={irAReportes}
+        onIrALaboratorio={irALaboratorio}
         equipoInicialId={equipoDetalleId}
       />
     )
@@ -76,6 +82,7 @@ function App() {
         onCerrarSesion={cerrarSesion}
         onIrAResumen={irAResumen}
         onIrAReportes={irAReportes}
+        onIrALaboratorio={irALaboratorio}
         onSeleccionarEquipo={irADetalleEquipo}
       />
     )
@@ -88,6 +95,20 @@ function App() {
         onCerrarSesion={cerrarSesion}
         onIrAResumen={irAResumen}
         onIrAConfiguracion={irAConfiguracion}
+        onIrALaboratorio={irALaboratorio}
+        onSeleccionarEquipo={irADetalleEquipo}
+      />
+    )
+  }
+
+  if (vista === "laboratorio") {
+    return (
+      <Laboratorio
+        sesion={sesion}
+        onCerrarSesion={cerrarSesion}
+        onIrAResumen={irAResumen}
+        onIrAConfiguracion={irAConfiguracion}
+        onIrAReportes={irAReportes}
         onSeleccionarEquipo={irADetalleEquipo}
       />
     )
@@ -100,6 +121,7 @@ function App() {
       onSeleccionarEquipo={irADetalleEquipo}
       onIrAConfiguracion={irAConfiguracion}
       onIrAReportes={irAReportes}
+      onIrALaboratorio={irALaboratorio}
     />
   )
 }

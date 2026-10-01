@@ -23,6 +23,9 @@ router = APIRouter(
 )
 
 
+TIPOS_SOPORTE_VALIDOS = ("rigido", "flexible")
+
+
 class EquipoEntrada(BaseModel):
     nombre: str
     tipo: str
@@ -30,6 +33,11 @@ class EquipoEntrada(BaseModel):
     estado: str = "normal"
     potencia_kw: Optional[float] = None
     rpm_nominal: Optional[float] = None
+    # rigido/flexible - lo exige la tabla de severidad ISO 20816-3
+    # (D-050, ver PROYECTO.md) para elegir la sub-tabla correcta; sin
+    # el, la clasificacion de severidad queda como no aplicable en vez
+    # de adivinar.
+    tipo_soporte: Optional[str] = None
 
 
 def construir_atributos(datos):
@@ -38,6 +46,8 @@ def construir_atributos(datos):
         atributos["potencia_kw"] = datos.potencia_kw
     if datos.rpm_nominal is not None:
         atributos["rpm_nominal"] = datos.rpm_nominal
+    if datos.tipo_soporte in TIPOS_SOPORTE_VALIDOS:
+        atributos["tipo_soporte"] = datos.tipo_soporte
     return atributos or None
 
 
@@ -51,6 +61,7 @@ def serializar(equipo):
         "estado": equipo.estado,
         "potencia_kw": atributos.get("potencia_kw"),
         "rpm_nominal": atributos.get("rpm_nominal"),
+        "tipo_soporte": atributos.get("tipo_soporte"),
         "fecha_creacion": equipo.fecha_creacion,
     }
 

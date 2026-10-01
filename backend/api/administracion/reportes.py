@@ -48,6 +48,10 @@ class ReporteEntrada(BaseModel):
     equipo_id: int
 
 
+class EliminarLoteEntrada(BaseModel):
+    reporte_ids: list[int]
+
+
 def serializar(reporte):
     resultado = reporte.resultado or {}
     return {
@@ -126,12 +130,21 @@ def generar_reporte(datos: ReporteEntrada):
         if not equipo:
             raise HTTPException(status_code=404, detail="Equipo no encontrado")
 
-        rpm_nominal = (equipo.atributos or {}).get("rpm_nominal")
+        atributos_equipo = equipo.atributos or {}
+        rpm_nominal = atributos_equipo.get("rpm_nominal")
         if not rpm_nominal:
             raise HTTPException(
                 status_code=422,
-                detail="El equipo no tiene RPM nominal registrado — configúralo en Equipos antes de generar el reporte",
+                detail=(
+                    "No se puede calcular el diagnóstico: falta el RPM nominal del equipo. Sin "
+                    "él no se puede ubicar 1x/2x/3x en el espectro FFT (desbalanceo, "
+                    "desalineación) ni calcular las frecuencias de falla de rodamiento "
+                    "(BPFO/BPFI/BSF/FTF) para el espectro de envolvente (Hilbert) — "
+                    "configúralo en Configuración → Equipos."
+                ),
             )
+        potencia_kw = atributos_equipo.get("potencia_kw")
+        tipo_soporte = atributos_equipo.get("tipo_soporte")
 
         sensores = sesion.query(Sensor).filter(Sensor.equipo_id == equipo.id).all()
         if not sensores:
@@ -173,6 +186,10 @@ def generar_reporte(datos: ReporteEntrada):
                 datos_crudos=datos_crudos,
                 frecuencia_muestreo=medicion.frecuencia_muestreo,
                 rodamiento=sensor.rodamiento,
+                potencia_kw=potencia_kw,
+                tipo_soporte=tipo_soporte,
+                unidad_señal=medicion.unidad,
+                orientacion_ejes=(sensor.configuracion or {}).get("orientacion_ejes"),
             )
 
             # El grafico de rodamiento (si se calculo) trae arreglos
@@ -251,6 +268,28 @@ def generar_reporte(datos: ReporteEntrada):
             if grafico is not None:
                 sensor_resultado["diagnostico"]["grafico_rodamiento"] = grafico
         return detalle
+    finally:
+        sesion.close()
+
+
+@router.post("/eliminar-lote")
+def eliminar_reportes_lote(datos: EliminarLoteEntrada):
+    """
+    Borrado por lote (checkbox "Seleccionar todos" en Reportes.jsx) -
+    misma logica que eliminar_reporte() para cada id, en una sola
+    transaccion. Ids que no existan se ignoran en silencio (ej. si el
+    historial ya se recargo y un reporte seleccionado fue borrado por
+    otra pestaña) en vez de fallar todo el lote.
+    """
+    sesion = SesionLocal()
+    try:
+        reportes = sesion.query(Reporte).filter(Reporte.id.in_(datos.reporte_ids)).all()
+        for reporte in reportes:
+            if reporte.ruta_pdf:
+                Path(reporte.ruta_pdf).unlink(missing_ok=True)
+            sesion.delete(reporte)
+        sesion.commit()
+        return {"mensaje": f"{len(reportes)} reporte(s) eliminado(s)", "cantidad": len(reportes)}
     finally:
         sesion.close()
 
