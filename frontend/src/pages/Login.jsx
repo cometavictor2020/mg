@@ -1,4 +1,6 @@
 import { useState } from "react"
+import LogoMotorGuardian from "../components/LogoMotorGuardian"
+import imagenRodamiento from "../assets/login-rodamiento.webp"
 
 function Login({ onLoginExitoso }) {
   const [email, setEmail] = useState("")
@@ -36,65 +38,25 @@ function Login({ onLoginExitoso }) {
       <section className="login-panel-izquierdo">
         <div>
           <div className="login-marca">
-            <svg
-              className="login-logo-icon"
-              width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="none"
-            >
-              <rect width="32" height="32" rx="4" fill="#00c9a7" fillOpacity="0.12" />
-              <circle cx="16" cy="16" r="6" stroke="#00c9a7" strokeWidth="1.5" fill="none" />
-              <circle cx="16" cy="16" r="2.5" fill="#00c9a7" />
-              <path
-                d="M16 4v4M16 24v4M4 16h4M24 16h4"
-                stroke="#00c9a7"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M8.22 8.22l2.83 2.83M20.95 20.95l2.83 2.83M23.78 8.22l-2.83 2.83M11.05 20.95l-2.83 2.83"
-                stroke="#00c9a7"
-                strokeWidth="1"
-                strokeLinecap="round"
-                opacity="0.5"
-              />
-            </svg>
+            <LogoMotorGuardian tamano={32} className="login-logo-icon" />
             <span className="login-marca-nombre">MotorGuardian</span>
           </div>
 
           <div className="login-contenido-izquierdo">
-            <p className="login-etiqueta">MANTENIMIENTO PREDICTIVO</p>
+            <p className="login-etiqueta">MANTENIMIENTO POR CONDICIÓN</p>
 
-            <h1>
-              Monitoreo industrial
-              <br />
-              en tiempo real.
-            </h1>
+            <h1>Monitoreo industrial</h1>
 
             <p className="login-descripcion">
-              Análisis continuo de vibraciones, FFT espectral y predicción de
-              fallas mediante IA — para motores eléctricos y maquinaria
-              industrial crítica.
+              Análisis de vibraciones, FFT espectral, envolvente y predicción
+              de fallas con apoyo de la IA para motores eléctricos y
+              maquinaria industrial crítica.
             </p>
           </div>
         </div>
 
-        <div className="login-stats">
-          <div className="login-stat">
-            <span>Sensores activos</span>
-            <strong>24</strong>
-          </div>
-
-          <div className="login-stat">
-            <span>Motores monitoreados</span>
-            <strong>8</strong>
-          </div>
-
-          <div className="login-stat">
-            <span>Alertas resueltas (30d)</span>
-            <strong>47</strong>
-          </div>
+        <div className="login-imagen" aria-hidden="true">
+          <img src={imagenRodamiento} alt="" />
         </div>
       </section>
 

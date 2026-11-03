@@ -99,31 +99,40 @@
   line-height: 1.6;
 }
 
-.login-stats {
-  display: flex;
-  flex-direction: column;
+/* Imagen decorativa al pie del panel izquierdo: se difumina hacia arriba y hacia
+   la izquierda para fundirse con el fondo. Va detrás del texto (z-index 0).
+   La imagen ya trae el fondo oscuro difuminado hacia arriba y a la izquierda;
+   se muestra completa, pegada a la esquina inferior derecha (proporción 610 x 776),
+   y la máscara solo suaviza sus bordes para que no se note el corte. */
+.login-panel-izquierdo > .login-imagen {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+
+  width: 58%;
+  aspect-ratio: 610 / 776;
+
+  pointer-events: none;
+
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 25%),
+    linear-gradient(to right, transparent 0%, #000 30%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 25%),
+    linear-gradient(to right, transparent 0%, #000 30%);
+  mask-composite: intersect;
 }
 
-.login-stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.login-imagen img {
+  display: block;
 
-  padding: 16px 0;
+  width: 100%;
+  height: 100%;
 
-  border-top: 1px solid var(--mg-borde);
-
-  font-family: var(--fuente-mono);
-  font-size: 0.85rem;
-}
-
-.login-stat span {
-  color: var(--mg-texto-muted);
-}
-
-.login-stat strong {
-  color: var(--mg-teal);
-  font-size: 1rem;
+  object-fit: cover;
+  object-position: right bottom;
 }
 
 .login-panel-derecho {
@@ -246,6 +255,10 @@
     border-right: none;
     border-bottom: 1px solid var(--mg-borde);
     padding: 36px 28px;
+  }
+
+  .login-panel-izquierdo > .login-imagen {
+    display: none;
   }
 
   .login-panel-derecho {

@@ -31,23 +31,7 @@
 }
 
 .logo-icon {
-  width: 42px;
-  height: 42px;
-
   flex-shrink: 0;
-
-  border-radius: 10px;
-
-  background: var(--color-primario);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #07111f;
-
-  font-size: 20px;
-  font-weight: bold;
 }
 
 .sidebar-logo h1 {

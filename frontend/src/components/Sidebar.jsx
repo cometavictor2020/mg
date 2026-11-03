@@ -1,5 +1,6 @@
 import { dashboardDemo } from "../data/dashboardDemo"
 import { useEquiposReales } from "../hooks/useEquiposReales"
+import LogoMotorGuardian from "./LogoMotorGuardian"
 
 function IconoResumen() {
   return (
@@ -78,7 +79,7 @@ function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="logo-icon">◎</div>
+        <LogoMotorGuardian tamano={42} className="logo-icon" />
 
         <div>
           <h1>{dashboardDemo.aplicacion.nombre}</h1>
