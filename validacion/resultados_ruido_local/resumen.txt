@@ -1,0 +1,33 @@
+Calibracion del criterio de relacion senal/ruido local (ver docstring de calibrar_ruido_local.py para el diseno y la regla)
+
+=== CALIBRACION  (% de registros; columnas = k; 'sin' = motor actual)
+conjunto  escenario        metrica                          N     sin     4.0     5.0     6.0     8.0    10.0
+mafaulda  con_orientacion  deteccion de desbalanceo       334      30      30      30      31      32      34
+mafaulda  con_orientacion  falsa alarma del sano           50      26      26      26      26      28      26
+mafaulda  sin_orientacion  deteccion de desbalanceo       334      69      69      69      70      71      73
+mafaulda  sin_orientacion  falsa alarma del sano           50      24      24      24      24      24      22
+sintetico con_orientacion  deteccion de desalineacion     240     100     100     100     100     100     100
+sintetico con_orientacion  deteccion de desbalanceo        80      21      61      92      96     100     100
+sintetico con_orientacion  falsa alarma del sano           80      54      44      29      19       5       0
+sintetico sin_orientacion  deteccion de desalineacion     240      93      93      93      92      88      82
+sintetico sin_orientacion  deteccion de desbalanceo        80      95      95      96      96     100     100
+sintetico sin_orientacion  falsa alarma del sano           80      44      41      28      19       5       0
+sro       sin_orientacion  deteccion de desbalanceo       200     100     100     100     100     100     100
+sro       sin_orientacion  falsa alarma del sano          200       0       0       0       0       0       0
+
+=== RESERVA  (% de registros; columnas = k; 'sin' = motor actual)
+conjunto  escenario        metrica                          N     sin     4.0     5.0     6.0     8.0    10.0
+mafaulda  con_orientacion  deteccion de desbalanceo       332      28      28      28      29      28      30
+mafaulda  con_orientacion  falsa alarma del sano           48      12      12      12      10      10      10
+mafaulda  sin_orientacion  deteccion de desbalanceo       332      69      69      68      69      69      70
+mafaulda  sin_orientacion  falsa alarma del sano           48       8       8       8       8       8       8
+sintetico con_orientacion  deteccion de desalineacion     240     100     100     100     100     100      99
+sintetico con_orientacion  deteccion de desbalanceo       240      32      56      68      74      90      95
+sintetico con_orientacion  falsa alarma del sano          240      51      31      21      16       7       6
+sintetico sin_orientacion  deteccion de desalineacion     240     100      99      98      97      92      87
+sintetico sin_orientacion  deteccion de desbalanceo       240      92      97      98      98      99      95
+sintetico sin_orientacion  falsa alarma del sano          240      30      21      16      14       7       6
+sro       sin_orientacion  deteccion de desbalanceo       200     100     100     100     100     100     100
+sro       sin_orientacion  falsa alarma del sano          180       1       1       1       1       1       1
+
+k elegido con la regla fijada de antemano (solo calibracion): None

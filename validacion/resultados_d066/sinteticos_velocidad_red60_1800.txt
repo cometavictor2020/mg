@@ -1,0 +1,43 @@
+### Perfil desbalanceo
+| metodo | bien | mal | nada |
+|---|---|---|---|
+| pico dominante (D-057) | 56 % | 1 % | 43 % |
+| peine armonico (D-066) | 42 % | 1 % | 56 % |
+| combinado (el que usa la app) | 71 % | 2 % | 27 % |
+
+### Perfil desalineacion
+| metodo | bien | mal | nada |
+|---|---|---|---|
+| pico dominante (D-057) | 54 % | 2 % | 44 % |
+| peine armonico (D-066) | 100 % | 0 % | 0 % |
+| combinado (el que usa la app) | 100 % | 0 % | 0 % |
+
+### Perfil sin_1x
+| metodo | bien | mal | nada |
+|---|---|---|---|
+| pico dominante (D-057) | 0 % | 1 % | 99 % |
+| peine armonico (D-066) | 89 % | 0 % | 11 % |
+| combinado (el que usa la app) | 89 % | 0 % | 11 % |
+
+### Perfil debil
+| metodo | bien | mal | nada |
+|---|---|---|---|
+| pico dominante (D-057) | 56 % | 1 % | 44 % |
+| peine armonico (D-066) | 82 % | 1 % | 17 % |
+| combinado (el que usa la app) | 92 % | 1 % | 7 % |
+
+### Perfil sin_giro (sin lineas del giro: solo red electrica y ruido; 'mal' = invento una velocidad)
+| metodo | bien | mal | nada |
+|---|---|---|---|
+| pico dominante (D-057) | 0 % | 1 % | 99 % |
+| peine armonico (D-066) | 0 % | 0 % | 100 % |
+| combinado (el que usa la app) | 0 % | 2 % | 98 % |
+
+### Acierto del metodo combinado segun la velocidad real respecto de la nominal (todos los perfiles con giro)
+| velocidad real | -10 % | -7 % | -5 % | -3 % | +0 % | +3 % | +5 % | +7 % | +10 % |
+|---|---|---|---|---|---|---|---|---|---|
+| pico dominante (D-057) | 75 % | 72 % | 75 % | 74 % | 75 % | 0 % | 0 % | 0 % | 0 % |
+| peine armonico (D-066) | 82 % | 66 % | 90 % | 87 % | 60 % | 83 % | 87 % | 67 % | 82 % |
+| combinado (el que usa la app) | 99 % | 99 % | 100 % | 100 % | 74 % | 83 % | 87 % | 67 % | 82 % |
+
+Sesgo del peine cuando estima (todos los perfiles): mediana +0.00 %, percentil 5 -0.13 %, percentil 95 +0.12 %.

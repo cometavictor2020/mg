@@ -1,0 +1,472 @@
+# =============================================================================
+# MotorGuardian - Criterios del proyecto (sin respaldo en una norma)
+# Archivo: criterios_proyecto.yaml
+#
+# QUE ES
+# ------
+# Decisiones, umbrales y parametros que el proyecto adopto por razones
+# empiricas o de practica general, y que NINGUNA de las normas citadas en
+# normativa_motorguardian.yaml trae. Viven aqui, aparte, para que se vea de un
+# vistazo que parte del motor tiene respaldo normativo y cual no.
+#
+# COMO SE RELACIONA CON LA NORMATIVA
+# ----------------------------------
+# - Complementa la norma; no la contradice. Aqui no se redefine nada que la
+#   norma ya fije (limites de severidad, calidad de medicion, frecuencias de
+#   falla): solo lo que la norma no cubre.
+# - Donde un criterio de este archivo y la regla general tocan el mismo punto,
+#   predomina este archivo, que es el mas especifico.
+# - El sistema no calcula nada si no pudo leer AMBOS archivos
+#   (diagnostico.py::cargar_normativa falla con un error explicito).
+# - En codigo se lee como normativa["criterios_proyecto"][...], nunca mezclado
+#   con las claves de normativa_motorguardian.yaml.
+#
+# Cada criterio declara su origen y su estado de validacion. Mientras diga
+# "pendiente", no es un valor validado: es el que se uso al construir el motor.
+# =============================================================================
+
+metadata:
+  archivo: "criterios_proyecto.yaml"
+  version: "1.0.0"
+  fecha_creacion: "2026-10-28"
+  relacion_con_normativa: "complementa_sin_contradecir"
+  precedencia: "predomina_sobre_la_regla_general_en_lo_que_la_norma_no_cubre"
+  estado: "pendiente_de_validacion"
+
+criterios_proyecto:
+
+  # Deteccion de lineas del espectro de envolvente de rodamientos (D-065,
+  # lineas_espectrales.py): significancia contra el piso de ruido LOCAL con
+  # una probabilidad de falsa alarma explicita, en vez de un umbral fijo.
+  # Valores a priori (no ajustados con ningun dataset de ensayo); pendientes
+  # de validacion como el resto de los criterios de este archivo.
+  deteccion_lineas_rodamiento:
+    factor_banda_minima: 5               # la banda de demodulacion empieza sobre esta cantidad de veces la mayor frecuencia de falla
+    factor_ancho_banda_minimo: 4         # ... y es al menos tan ancha como esta cantidad de veces esa frecuencia (portadora + bandas laterales)
+    probabilidad_falsa_alarma: 0.01      # de cada busqueda de una linea (familia de bins de su ventana)
+    ventana_piso_ruido_hz: 20.0          # ancho de la mediana movil que estima el piso
+    minimo_bins_piso: 21                 # nunca menos de estos bins, aunque la resolucion sea gruesa
+    margen_estimacion_piso: 1.07         # corrige el error de estimar el piso (calibrado con ruido blanco)
+    coherencia_armonicos_pct: 0.5        # un armonico debe caer a k veces la frecuencia ya detectada, con este margen
+    coherencia_minima_bins: 2            # ... y nunca menos de estos bins de margen
+    coincidencia_lineas_bins: 2          # dos lineas de hipotesis distintas son "la misma" dentro de este margen en bins
+    coincidencia_lineas_pct: 0.5         # ... o de este porcentaje de la frecuencia, el mayor de los dos
+
+  # velocidad_real: busqueda de la velocidad de giro cuando la medicion no la
+  # declara (D-057). Un motor de induccion con carga gira por debajo de su
+  # velocidad nominal (deslizamiento) y la tolerancia de +-3 % para ubicar 1x
+  # no alcanza (en el dataset de Kumar et al., 2022: 25 Hz nominales, 23,4 Hz
+  # con carga, -6 %). La velocidad se estima como el pico dominante dentro de
+  # esta banda alrededor de la nominal; la banda es asimetrica porque la
+  # carga solo baja la velocidad. Criterio del proyecto, no proviene de una
+  # norma - pendiente de validacion.
+  velocidad_real:
+    fuente: "criterio_del_proyecto_pendiente_de_validacion"
+    ventana_busqueda_inferior_pct: 10.0
+    ventana_busqueda_superior_pct: 3.0
+    desviacion_maxima_valida_pct: 50.0
+    # Control de consistencia (D-058): si cerca del 1x esperado (a +-zona_pct
+    # de la frecuencia de giro usada) hay un pico FUERA de la ventana de
+    # coincidencia (+-3 %) que es al menos razon_minima_pico_externo veces
+    # mayor que el pico encontrado dentro de ella, la velocidad usada puede no
+    # ser la real y el 1x encontrado puede ser un pico vecino. Se advierte; no
+    # cambia el diagnostico. Criterio del proyecto, pendiente de validacion.
+    verificacion:
+      zona_pct: 15.0
+      razon_minima_pico_externo: 2.0
+    # Estimacion por peine armonico (D-066, velocidad_peine.py): se prueba cada
+    # velocidad de la banda y se puntua cuantos multiplos k*fr (k = 1..K) caen
+    # sobre lineas significativas del espectro (misma estadistica que
+    # deteccion_lineas_rodamiento). Se intenta primero; si no alinea al menos
+    # minimo_armonicos armonicos, se usa el pico dominante (arriba). La banda es
+    # simetrica porque, a diferencia del pico dominante, un peine de varios
+    # armonicos casi no se confunde con una linea vecina. Lejos de la nominal
+    # (mas de zona_cercana_pct) se exigen mas armonicos: es menos verosimil a
+    # priori y, en un espectro con muchas lineas (rodamiento con falla), el azar
+    # alinea dos armonicos de una velocidad falsa. Valores a priori, pendientes
+    # de validacion.
+    peine:
+      ventana_inferior_pct: 10.0
+      ventana_superior_pct: 10.0
+      paso_busqueda_pct: 0.05
+      armonicos_maximos: 8
+      minimo_armonicos: 2
+      zona_cercana_pct: 3.0
+      minimo_armonicos_fuera_de_zona: 3
+      saturacion_bits: 25.0
+      # Unicidad: el ganador debe superar en esta razon al mejor rival separado
+      # de el al menos separacion_unicidad_pct; si no, el peine es ambiguo.
+      razon_minima_unicidad: 1.5
+      separacion_unicidad_pct: 1.5
+      # Las lineas de la red electrica no se mueven con la velocidad: un armonico
+      # k*fr que cae sobre un multiplo de estas frecuencias (a +-margen_red_bins
+      # bins) no cuenta como evidencia. Sin esto, la red atrae la estimacion
+      # hacia la velocidad sincrona. Se listan 50 y 60 Hz porque este archivo
+      # no sabe en que red opera cada planta.
+      frecuencias_red_hz: [50.0, 60.0]
+      margen_red_bins: 2
+    # Estimacion por la firma de una falla de rodamiento (D-066,
+    # diagnostico_rodamientos.py::estimar_velocidad_por_rodamiento): respaldo del
+    # peine cuando este es ambiguo. Una velocidad candidata cuenta si da una
+    # hipotesis de BPFO, BPFI o BSF con toda su evidencia (fundamental, armonico
+    # y/o bandas laterales coherentes). Supone que la falla existe. Valores a
+    # priori, pendientes de validacion.
+    rodamiento:
+      ventana_inferior_pct: 10.0
+      ventana_superior_pct: 10.0
+      paso_busqueda_pct: 0.25
+      confianza_minima: 0.9
+      razon_minima_unicidad: 1.5
+      separacion_unicidad_pct: 4.0
+
+  # direccion_radial_axial: umbrales para las evidencias "direccion_radial"
+  # y "vibracion_axial" de las reglas desbalanceo/desalineacion_angular/
+  # desalineacion_paralela (seccion 6). A diferencia del resto de este
+  # archivo, estos numeros NO provienen de una norma ISO especifica -
+  # ninguna de las 12 normas citadas (seccion 3) trae una cifra concreta
+  # para esta comparacion, y el archivo declara explicitamente
+  # texto_iso_incrustado: false (no se reproduce texto de normas pagadas).
+  # Son una regla de practica general de analisis de vibraciones
+  # (formacion de analistas categoria ISO 18436-2), PENDIENTE de
+  # validacion con el profesor guia o una fuente normativa citable -
+  # ver R-003 en PROYECTO.md. No tratar como cita ISO.
+  direccion_radial_axial:
+    fuente: "practica_general_no_iso_especifica_pendiente_validacion"
+    ratio_minimo_radial_sobre_axial_para_predominante: 1.5
+    ratio_minimo_axial_sobre_radial_para_muy_elevada: 1.0
+
+  # relacion_2x_1x: relacion entre el mejor pico en 2x y el mejor pico en 1x (en cualquier eje) de la medicion.
+  # La normativa pide para el desbalanceo un 2x "baja_respecto_1x" y para la desalineacion paralela un 2x
+  # "elevada", pero no trae cifras; antes el motor solo preguntaba si habia un pico en 2x, y el 2x pequeño que
+  # deja un desbalanceo contaba como evidencia de desalineacion. Origen: empirico, sin respaldo en norma,
+  # pendiente de validacion. Referencia de la literatura de diagnostico por vibraciones: en la desalineacion el
+  # 2x alcanza una fraccion importante del 1x (a menudo de 0,3 a 1); en el desbalanceo puro es una fraccion pequeña.
+  # Los valores se fijaron con los archivos de MAFAULDA a ~45 Hz (UFRJ; masa y desplazamiento conocidos, velocidad
+  # medida con tacometro): razon 2x/1x de 0,05 a 0,11 en desbalanceo (6 a 35 g), 0,16 en normal, 0,31 a 0,39 en
+  # desalineacion horizontal de 1,5 y 2,0 mm (0,08 a 0,14 con 0,5 y 1,0 mm, indistinguible del sano). Entre ambos
+  # umbrales la relacion no es evidencia ni a favor ni en contra.
+  # Validacion (validacion/resultados_2x1x/resumen.txt): son solo 18 archivos de calibracion (1 o 2 por severidad).
+  # Con los 561 archivos de reserva de MAFAULDA (otras velocidades), la desalineacion paralela falsa en archivos de
+  # desbalanceo baja de 42-81 % a 0-5 % y la deteccion de desbalanceo no cambia (81-88 %); pero la desalineacion
+  # horizontal NO se detecta (razon mediana 0,14-0,22, cerca de la del sano, 0,17). En Ottawa (aceleracion en m/s2,
+  # 3600 r/min) el desbalanceo tiene una razon 2x/1x alta y con estos umbrales se lee como desalineacion paralela:
+  # los umbrales no se trasladan entre datasets. Pendiente de validacion.
+  relacion_2x_1x:
+    fuente: "empirico_sin_norma_pendiente_de_validacion"
+    razon_maxima_para_baja: 0.20
+    razon_minima_para_elevada: 0.25
+
+  # cambio_respecto_linea_base: indicador de cambio de la velocidad RMS de
+  # banda ancha respecto de la medicion de referencia del sensor (D-059).
+  # Sustituye, para equipos fuera del rango de ISO 20816-3 (potencia bajo 15 kW),
+  # a la clasificacion por zonas, que ahi no aplica. NO es una norma: los
+  # umbrales de cambio son los de definicion_cualitativa (elevado >= 1,25 y
+  # muy_elevado >= 2,0 veces la referencia) y la banda de medicion es la de
+  # ISO 20816-3 (4.3, p. 6: 10-1000 Hz, o 2-1000 Hz bajo 600 r/min) usada aqui
+  # como criterio del proyecto. Pendiente de validacion.
+  cambio_respecto_linea_base:
+    fuente: "criterio_del_proyecto_pendiente_de_validacion"
+    banda_hz:
+      minima: 10.0
+      minima_bajo_600_rpm: 2.0
+      rpm_limite_banda_baja: 600.0
+      maxima: 1000.0
+
+  # linea_base_varios_registros: la referencia de 1x/2x/3x se arma con varias mediciones sanas del sensor (el maximo
+  # por armonico y eje) en vez de una sola. Origen: empirico, sin respaldo en norma. La amplitud de un armonico real
+  # varia entre mediciones sanas mas de x1,25 (min_ratio_baseline de definicion_cualitativa.elevado); con una sola
+  # referencia esa variacion se lee como "elevado" y da falsa alarma. Calibrado con datos sinteticos y MAFAULDA/SRO
+  # (validacion/resultados_linea_base_varios/): con 3 registros la falsa alarma del sano baja de 11 a 4 % (sintetico) y
+  # de 24 a 6 % (MAFAULDA) sin costo de deteccion; con 5 baja mas (2 %). Con menos de registros_minimos la linea
+  # base se acepta igual (compatibilidad con la de un solo registro) pero se avisa que es una referencia pobre.
+  # Pendiente de validacion con datos reales de planta. Los umbrales de aviso no agregan cifras nuevas: un registro
+  # es "atipico" si algun armonico supera muy_elevado (definicion_cualitativa) veces la mediana de los demas, y sus
+  # velocidades difieren si se apartan mas que tolerancias.coincidencia_frecuencia_pct_default.
+  linea_base_varios_registros:
+    fuente: "empirico_sin_norma_pendiente_de_validacion"
+    regla_combinacion: "max"
+    registros_minimos: 3
+    registros_maximos: 10
+
+  # --- Parametros del motor de reglas (antes en normativa: configuracion_motor_reglas). Ninguno viene de una norma.
+
+  tolerancias:
+    coincidencia_frecuencia_pct_default: 3.0
+    coincidencia_frecuencia_rodamientos_pct_default: 2.0
+    coincidencia_banda_lateral_pct_default: 3.0
+
+  deteccion_picos:
+    metodo_default: "prominencia"
+    prominencia_minima_relativa: 0.05
+    relacion_sobre_ruido_minima: 3.0
+    # Relacion senal/ruido LOCAL: ademas de la mediana global, el pico debe superar este multiplo de la mediana del
+    # espectro a +-ventana_ruido_local_hz de el. Evita que un armonico que solo roza el ruido (el 2x de una maquina
+    # sana, el axial 1x pequeno de un desbalanceo) cuente como pico y, comparado con una linea base que tambien es
+    # ruido, como "elevado" (x1,25). Origen: empirico, sin respaldo en norma. Valor y ventana elegidos con
+    # herramientas/local_sin_git/calibrar_ruido_local.py (resultados en validacion/resultados_ruido_local/):
+    # k = 8 entre {4, 5, 6, 8, 10}, ventana fija de +-10 Hz, sobre datos sinteticos de desalineacion (solo
+    # calibracion), con MAFAULDA y SRO de control. Calibracion sintetica: falsa alarma del sano 44-54 % -> 5 %;
+    # reserva (ruido x0,5, x1, x2): ~30-51 % -> ~7 %, y desbalanceo detectado con orientacion declarada 32 -> 90 %.
+    # Costo: la desalineacion detectada cae ~8 puntos sin orientacion (72-78 % con ruido x2 y severidad baja,
+    # porque los armonicos debiles quedan bajo el umbral). Limites: la regla de seleccion fijada de antemano
+    # (la falsa alarma debia bajar en TODOS los conjuntos de calibracion) NO se cumplio, porque las falsas alarmas de
+    # MAFAULDA (24 %) no vienen de picos de ruido; k = 8 se activa como excepcion declarada por decision del
+    # desarrollador, no por la regla. Esas falsas alarmas (y las que quedan con poco ruido en lo sintetico) vienen
+    # de la variabilidad natural de amplitud (> x1,25) entre mediciones con UNA sola linea base: con la
+    # referencia armada con varios registros sanos bajan a 2-6 % en MAFAULDA y a 2-4 % en lo sintetico (ver
+    # validacion/resultados_linea_base_varios/; solo experimento, el motor y la aplicacion aun usan un registro).
+    # Pendiente de validacion con datos reales.
+    relacion_sobre_ruido_local_minima: 8.0
+    ventana_ruido_local_hz: 10.0
+
+  definicion_cualitativa:
+    muy_bajo:
+      max_ratio_baseline: 1.10
+    normal:
+      max_ratio_baseline: 1.25
+    elevado:
+      min_ratio_baseline: 1.25
+    muy_elevado:
+      min_ratio_baseline: 2.00
+
+  faltan_datos:
+    politica: "no_inferir"
+    registrar_feature_no_disponible: true
+
+
+  # --- Motor de confianza diagnostica (antes en normativa, seccion 7). Metodo, niveles, topes y reglas de salida
+  # son decisiones del proyecto: ninguna norma fija estos numeros.
+
+  confianza_diagnostico:
+    metodo: "score_normalizado_por_evidencia_disponible"
+
+    formula_conceptual: >
+      score = suma(pesos_evidencia_cumplida) /
+              suma(pesos_positivos_maximos_de_evidencia_evaluable)
+
+    salida:
+      minimo: 0.0
+      maximo: 1.0
+
+    niveles:
+      muy_baja:
+        min_inclusivo: 0.00
+        max_exclusivo: 0.30
+        texto: "Evidencia insuficiente"
+      baja:
+        min_inclusivo: 0.30
+        max_exclusivo: 0.50
+        texto: "Hipótesis débil"
+      media:
+        min_inclusivo: 0.50
+        max_exclusivo: 0.70
+        texto: "Evidencia moderada"
+      alta:
+        min_inclusivo: 0.70
+        max_exclusivo: 0.85
+        texto: "Evidencia fuerte"
+      muy_alta:
+        min_inclusivo: 0.85
+        max_exclusivo: 1.01
+        texto: "Evidencia muy fuerte"
+
+    restricciones:
+      - condicion: "calidad_medicion == invalida"
+        confianza_maxima: 0.0
+      - condicion: "calidad_medicion == insuficiente"
+        confianza_maxima: 0.30
+      - condicion: "rpm_no_disponible"
+        afecta:
+          - "desbalanceo"
+          - "desalineacion_angular"
+          - "desalineacion_paralela"
+          - "holgura_mecanica_estructural"
+          - "holgura_mecanica_interna"
+        confianza_maxima: 0.50
+      - condicion: "geometria_rodamiento_no_disponible"
+        afecta:
+          - "rodamiento_pista_exterior"
+          - "rodamiento_pista_interior"
+          - "rodamiento_elemento_rodante"
+          - "rodamiento_jaula"
+        confianza_maxima: 0.40
+      # Sin una linea base del sensor (gestion_condicion.baseline), la
+      # evidencia de estas fallas es solo "hay un pico en 1x/2x", y una
+      # maquina sana con carga ya tiene un 1x apreciable - no se puede
+      # distinguir "presente" de "anormal". Hasta que el sensor tenga una
+      # medicion sana marcada como referencia, la confianza queda acotada.
+      # Criterio del proyecto (no proviene de una norma), pendiente de
+      # validacion - ver D-056 en PROYECTO.md.
+      - condicion: "linea_base_no_disponible"
+        afecta:
+          - "desbalanceo"
+          - "desalineacion_angular"
+          - "desalineacion_paralela"
+        confianza_maxima: 0.50
+
+    reglas_salida:
+      numero_maximo_hipotesis: 3
+      incluir_hipotesis_desde_confianza: 0.30
+      marcar_diagnostico_principal_desde_confianza: 0.70
+      permitir_resultado_inconcluso: true
+
+
+  # Competencia entre hipotesis de rodamiento (diagnostico_rodamientos.py::_competir). Origen: empirico, sin
+  # respaldo en norma, pendiente de validacion; se fijaron al revisar los 8 archivos con falla de CWRU, donde
+  # una falla de pista intensa dejaba hipotesis espurias de pista interior, elemento rodante y jaula.
+  competencia_rodamientos:
+    # Una hipotesis se descarta si la suma de r^2 de sus lineas propias (sin las que otra falla tambien puede
+    # reclamar) es menor que esta fraccion de la de la falla dominante: no se distingue de las lineas
+    # secundarias que esa falla deja en el espectro de envolvente.
+    fuerza_minima_respecto_dominante: 0.10
+    # Una hipotesis se descarta si su linea mas fuerte (sin las que otra falla reclama) supera el piso de ruido
+    # local menos de esta cantidad de veces. Origen: empirico. En 35 hipotesis verdaderas (MFPT y CWRU) la
+    # linea mas fuerte va de 15,7 a 123 veces el piso; en las 2 falsas de rodamiento sano, 3,4 y 3,9. Con solo
+    # 2 falsas el hueco no esta validado: pendiente con mas datos sanos. El valor sale de un barrido con las
+    # señales sinteticas: 4,5 deja una holgura de 0,6 sobre la falsa mas fuerte (3,9) y conserva mas
+    # sensibilidad a fallas debiles que 6 (pista interior con severidad 1: 68 % frente a 22 %; sin la regla, 82 %).
+    razon_minima_linea_mas_fuerte: 4.5
+    # La jaula se informa solo si no hay una falla de pista (BPFO/BPFI) aceptada con esta confianza: con
+    # una falla de pista, la linea en FTF (modulacion por jaula) no distingue un dano de jaula.
+    jaula_subordinada_a_pista:
+      confianza_minima_pista: 0.90
+
+  # --- Evidencias que el proyecto agrega a una regla de la normativa. La regla de la normativa queda intacta y
+  # esta evidencia se SUMA a las suyas al cargar (diagnostico.py::cargar_normativa): complementa, no
+  # reemplaza ni contradice. No puede repetir una evidencia que la regla ya tiene (eso seria redefinirla).
+  # Cada una lleva su peso en pesos_reglas, como cualquier otra evidencia.
+  #
+  # rodamiento_jaula / armonicos_FTF - origen: empirico, sin respaldo en norma, pendiente de validacion.
+  #   La regla de la normativa pide una sola linea (pico o modulacion en FTF). En los 8 archivos con falla
+  #   de CWRU (pista exterior e interior, 7 y 21 mils, 2 ventanas de 2 s cada uno) la jaula aparecia con
+  #   confianza 1,00 en 5 ventanas aunque la falla real era de pista, porque hay una linea cerca de FTF
+  #   (~12 Hz) en el espectro de envolvente de esos ensayos (el piso de ruido de baja frecuencia no es
+  #   blanco, y la deteccion de lineas lo supone). Una falla de jaula es un tren de impactos a FTF: deja
+  #   tambien su segundo armonico, asi que se exige esa segunda linea para dar confianza completa.
+  evidencias_complementarias:
+    rodamiento_jaula:
+      evidencias:
+        - feature: "armonicos_FTF"
+          condicion: "presentes"
+
+  # --- Pesos del motor de evidencias ponderadas (antes en normativa: motor_diagnostico.pesos_evidencia y el
+  # campo 'peso' de cada evidencia). En la normativa quedan los sintomas de cada falla (feature + condicion);
+  # aqui, cuanto pesa cada uno. Se componen al cargar (diagnostico.py::cargar_normativa).
+
+  pesos_evidencia:
+    fuerte: 3.0
+    moderada: 2.0
+    debil: 1.0
+    en_contra: -2.0
+
+
+  pesos_reglas:
+    cavitacion:
+      evidencias:
+        energia_banda_ancha: "fuerte"
+        senal_temporal: "moderada"
+    desalineacion_angular:
+      evidencias:
+        amplitud_1x: "moderada"
+        vibracion_axial: "fuerte"
+        amplitud_2x: "moderada"
+    desalineacion_paralela:
+      evidencias:
+        amplitud_2x: "fuerte"
+        amplitud_1x: "moderada"
+        vibracion_radial: "moderada"
+    desbalanceo:
+      evidencias:
+        amplitud_1x: "fuerte"
+        direccion_radial: "moderada"
+        amplitud_2x: "debil"
+      evidencias_en_contra:
+        vibracion_axial: "en_contra"
+        muchos_armonicos_1x: "en_contra"
+    eje_doblado:
+      evidencias:
+        amplitud_1x: "moderada"
+        vibracion_axial: "moderada"
+        fase: "fuerte"
+    engranaje_deteriorado:
+      evidencias:
+        GMF: "moderada"
+        bandas_laterales_GMF: "fuerte"
+        impactos_periodicos: "moderada"
+    excentricidad:
+      evidencias:
+        componente_2FL: "fuerte"
+        amplitud_1x: "moderada"
+    holgura_mecanica_estructural:
+      evidencias:
+        numero_armonicos_significativos: "fuerte"
+        armonicos_1x: "fuerte"
+        direccion_predominante: "moderada"
+    holgura_mecanica_interna:
+      evidencias:
+        sub_armonicos: "fuerte"
+        numero_armonicos_significativos: "fuerte"
+        senal_temporal: "moderada"
+    lubricacion_deficiente:
+      evidencias:
+        energia_alta_frecuencia: "fuerte"
+        kurtosis: "moderada"
+        espectro_envolvente: "moderada"
+    problema_electrico_estator:
+      evidencias:
+        componente_2FL: "fuerte"
+        bandas_laterales_2FL: "moderada"
+    resonancia:
+      evidencias:
+        amplitud_vibracion: "fuerte"
+        variacion_rpm: "fuerte"
+    rodamiento_elemento_rodante:
+      evidencias:
+        espectro_envolvente_BSF: "fuerte"
+        bandas_laterales_BSF: "moderada"
+    rodamiento_jaula:
+      evidencias:
+        espectro_envolvente_FTF: "debil"
+        armonicos_FTF: "fuerte"    # complementaria (evidencias_complementarias): con solo la linea en FTF, confianza 0,25 (no se muestra)
+    rodamiento_pista_exterior:
+      evidencias:
+        espectro_envolvente_BPFO: "fuerte"
+        armonicos_BPFO: "fuerte"
+        kurtosis: "moderada"
+    rodamiento_pista_interior:
+      evidencias:
+        espectro_envolvente_BPFI: "fuerte"
+        bandas_laterales_BPFI: "fuerte"
+        armonicos_BPFI: "moderada"
+    rotor_barra_rota_sospecha:
+      evidencias:
+        bandas_laterales_frecuencia_paso_polos: "fuerte"
+        carga_motor: "debil"
+
+  # --- Calidad de medicion (antes en normativa: calidad_medicion.validaciones). En la normativa queda QUE se valida
+  # (lista de validaciones, factor minimo de Nyquist = 2); aqui, la criticidad asignada a cada una y los umbrales.
+  # El factor 2,56 se atribuye a ISO 13373-1 en el texto de las advertencias: pendiente de citar la clausula.
+
+  calidad_medicion:
+    criticidad:
+      saturacion_sensor: "critica"
+      muestras_perdidas: "alta"
+      frecuencia_muestreo: "critica"
+      duracion_registro: "media"
+      rpm_disponible: "alta"
+      condicion_operacional_estable: "alta"
+      montaje_sensor: "alta"
+      orientacion_sensor: "media"
+    muestras_perdidas:
+      porcentaje_max_admisible_default: 0.1
+    frecuencia_muestreo:
+      factor_recomendado_sobre_fmax: 2.56
+
+  # --- Ventanas de tendencia (antes en normativa: features.tendencia y gestion_condicion.tendencia).
+
+  tendencia:
+    dias_ventana_default: 30
+    ventanas_dias:
+      corta: 7
+      media: 30
+      larga: 90

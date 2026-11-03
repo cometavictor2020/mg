@@ -1,0 +1,249 @@
+MFPT: 20 archivos usados; excluidos por no tener estado documentado: IntermediateSpeedBearing.mat, OilPumpBearing.mat, PlanetBearing.mat; omitidos por ser copia exacta de otro: 5 - Analyses/InnerRaceFault_vload_7.mat
+
+### MFPT — rodamientos — escenario velocidad_declarada (20 archivos, 32 ventanas de 2 s)
+| umbral τ | pista exterior: BPFO ≥ τ (sensibilidad) | pista interior: BPFI ≥ τ (sensibilidad) | sano: alguna hipótesis de rodamiento ≥ τ (falsa alarma) | exterior: BPFO como única hipótesis ≥ τ | interior: BPFI como única hipótesis ≥ τ |
+|---|---|---|---|---|---|
+| 0.30 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] |
+| 0.50 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] |
+| 0.70 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] |
+| 0.90 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] |
+
+Matriz de confusión (ventanas con la hipótesis ≥ 0.50), fila = estado real:
+| real | ventanas | BPFO | BPFI | BSF | FTF | ninguna |
+|---|---|---|---|---|---|---|
+| sano | 9 | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 9/9 = 100 % [70–100] |
+| pista_exterior | 16 | 16/16 = 100 % [81–100] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] |
+| pista_interior | 7 | 0/7 = 0 % [0–35] | 7/7 = 100 % [65–100] | 0/7 = 0 % [0–35] | 0/7 = 0 % [0–35] | 0/7 = 0 % [0–35] |
+
+Matriz de confusión (ventanas con la hipótesis ≥ 0.70), fila = estado real:
+| real | ventanas | BPFO | BPFI | BSF | FTF | ninguna |
+|---|---|---|---|---|---|---|
+| sano | 9 | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 0/9 = 0 % [0–30] | 9/9 = 100 % [70–100] |
+| pista_exterior | 16 | 16/16 = 100 % [81–100] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] |
+| pista_interior | 7 | 0/7 = 0 % [0–35] | 7/7 = 100 % [65–100] | 0/7 = 0 % [0–35] | 0/7 = 0 % [0–35] | 0/7 = 0 % [0–35] |
+
+Sensibilidad por archivo (BPFO ≥ 0.70 para exterior, BPFI ≥ 0.70 para interior; falsa alarma en sano a ≥ 0.70):
+| archivo | real | resultado |
+|---|---|---|
+| InnerRaceFault_vload_1.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_2.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_3.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_4.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_5.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_6.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| InnerRaceFault_vload_7.mat | pista_interior | BPFI ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_1.mat | pista_exterior | BPFO ≥ 0.70 en 3/3 ventanas (máx 1.00) |
+| OuterRaceFault_2.mat | pista_exterior | BPFO ≥ 0.70 en 3/3 ventanas (máx 1.00) |
+| OuterRaceFault_3.mat | pista_exterior | BPFO ≥ 0.70 en 3/3 ventanas (máx 1.00) |
+| OuterRaceFault_vload_1.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_2.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_3.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_4.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_5.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_6.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| OuterRaceFault_vload_7.mat | pista_exterior | BPFO ≥ 0.70 en 1/1 ventanas (máx 1.00) |
+| baseline_1.mat | sano | alarma en 0/3 ventanas |
+| baseline_2.mat | sano | alarma en 0/3 ventanas |
+| baseline_3.mat | sano | alarma en 0/3 ventanas |
+
+### MFPT — por ARCHIVO (unidad independiente; un archivo es positivo si más de la mitad de sus ventanas lo son)
+| umbral τ | exterior: BPFO | interior: BPFI | sano: falsa alarma | exterior con BPFI también (confusión) | interior con BPFO también (confusión) |
+|---|---|---|---|---|---|
+| 0.50 | 10/10 = 100 % [72–100] | 7/7 = 100 % [65–100] | 0/3 = 0 % [0–56] | 0/10 = 0 % [0–28] | 0/7 = 0 % [0–35] |
+| 0.70 | 10/10 = 100 % [72–100] | 7/7 = 100 % [65–100] | 0/3 = 0 % [0–56] | 0/10 = 0 % [0–28] | 0/7 = 0 % [0–35] |
+| 0.90 | 10/10 = 100 % [72–100] | 7/7 = 100 % [65–100] | 0/3 = 0 % [0–56] | 0/10 = 0 % [0–28] | 0/7 = 0 % [0–35] |
+
+Hipótesis principal de rodamiento por ventana (la de mayor confianza; empate = dos o más con la misma confianza máxima):
+| real | ventanas | principal = correcta (sin empate) | correcta empatada con otra | principal incorrecta |
+|---|---|---|---|---|
+| pista_exterior | 16 | 16/16 = 100 % [81–100] | 0/16 = 0 % [0–19] | 0/16 = 0 % [0–19] |
+| pista_interior | 7 | 7/7 = 100 % [65–100] | 0/7 = 0 % [0–35] | 0/7 = 0 % [0–35] |
+
+### MFPT — rodamientos — efecto de una velocidad nominal equivocada (sin declarar la velocidad real)
+
+Umbral τ = 0.50:
+| escenario | exterior: BPFO ≥ τ | interior: BPFI ≥ τ | sano: falsa alarma | ventanas con velocidad estimada | con velocidad nominal |
+|---|---|---|---|---|---|
+| velocidad_declarada | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 0 | 0 |
+| nominal_+0 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_-10 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 23 | 9 |
+| nominal_-5 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_-3 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+3 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+5 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+10 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+
+Umbral τ = 0.70:
+| escenario | exterior: BPFO ≥ τ | interior: BPFI ≥ τ | sano: falsa alarma | ventanas con velocidad estimada | con velocidad nominal |
+|---|---|---|---|---|---|
+| velocidad_declarada | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 0 | 0 |
+| nominal_+0 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_-10 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 23 | 9 |
+| nominal_-5 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_-3 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+3 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+5 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+| nominal_+10 | 16/16 = 100 % [81–100] | 7/7 = 100 % [65–100] | 0/9 = 0 % [0–30] | 32 | 0 |
+
+### MFPT — estimación de velocidad con la nominal equivocada (D-057/D-058)
+| nominal equivocada | ventanas | velocidad recuperada (error ≤ 0.5 %) | error mediano | error máximo | aviso de inconsistencia | ventanas con velocidad 'estimada' |
+|---|---|---|---|---|---|---|
+| -10 % | 32 | 0/32 = 0 % [0–11] | 10.00 % | 10.0 % | 12/32 = 38 % [23–55] | 5 |
+| -5 % | 32 | 9/32 = 28 % [16–45] | 0.72 % | 5.0 % | 0/32 = 0 % [0–11] | 25 |
+| -3 % | 32 | 9/32 = 28 % [16–45] | 0.72 % | 3.0 % | 0/32 = 0 % [0–11] | 29 |
+| +0 % | 32 | 12/32 = 38 % [23–55] | 0.70 % | 1.0 % | 0/32 = 0 % [0–11] | 29 |
+| +3 % | 32 | 9/32 = 28 % [16–45] | 0.73 % | 3.0 % | 0/32 = 0 % [0–11] | 25 |
+| +5 % | 32 | 9/32 = 28 % [16–45] | 0.72 % | 5.0 % | 0/32 = 0 % [0–11] | 24 |
+| +10 % | 32 | 9/32 = 28 % [16–45] | 0.72 % | 10.0 % | 0/32 = 0 % [0–11] | 23 |
+
+### Ottawa — reglas de rotor — escenario sin_linea_base (320 ventanas de 2 s; 4 velocidades × 2 cargas)
+
+Ventanas con la hipótesis ≥ 0.50, fila = estado real:
+| real | ventanas | desbalanceo | desalineación (paralela o angular) | alguna de las tres |
+|---|---|---|---|---|
+| H_H (sano) | 40 | 30/40 = 75 % [60–86] | 31/40 = 78 % [62–88] | 31/40 = 78 % [62–88] |
+| R_U (desbalanceo de rotor) | 40 | 30/40 = 75 % [60–86] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+| R_M (desalineacion de rotor) | 40 | 30/40 = 75 % [60–86] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+| B_R (rotor doblado) | 40 | 25/40 = 62 % [47–76] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+| K_A (barras rotas) | 40 | 28/40 = 70 % [55–82] | 39/40 = 98 % [87–100] | 39/40 = 98 % [87–100] |
+| S_W (bobinado del estator) | 40 | 25/40 = 62 % [47–76] | 33/40 = 82 % [68–91] | 33/40 = 82 % [68–91] |
+| V_U (desbalance de voltaje) | 40 | 25/40 = 62 % [47–76] | 35/40 = 88 % [74–95] | 35/40 = 88 % [74–95] |
+| F_B (rodamiento (sin geometria)) | 40 | 25/40 = 62 % [47–76] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+
+### Ottawa — reglas de rotor — escenario con_linea_base (312 ventanas de 2 s; 4 velocidades × 2 cargas)
+
+Ventanas con la hipótesis ≥ 0.50, fila = estado real:
+| real | ventanas | desbalanceo | desalineación (paralela o angular) | alguna de las tres |
+|---|---|---|---|---|
+| H_H (sano) | 32 | 0/32 = 0 % [0–11] | 1/32 = 3 % [1–16] | 1/32 = 3 % [1–16] |
+| R_U (desbalanceo de rotor) | 40 | 25/40 = 62 % [47–76] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+| R_M (desalineacion de rotor) | 40 | 25/40 = 62 % [47–76] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+| B_R (rotor doblado) | 40 | 25/40 = 62 % [47–76] | 35/40 = 88 % [74–95] | 35/40 = 88 % [74–95] |
+| K_A (barras rotas) | 40 | 18/40 = 45 % [31–60] | 34/40 = 85 % [71–93] | 34/40 = 85 % [71–93] |
+| S_W (bobinado del estator) | 40 | 20/40 = 50 % [35–65] | 32/40 = 80 % [65–90] | 32/40 = 80 % [65–90] |
+| V_U (desbalance de voltaje) | 40 | 15/40 = 38 % [24–53] | 35/40 = 88 % [74–95] | 35/40 = 88 % [74–95] |
+| F_B (rodamiento (sin geometria)) | 40 | 20/40 = 50 % [35–65] | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] |
+
+Ventanas con la hipótesis ≥ 0.70, fila = estado real:
+| real | ventanas | desbalanceo | desalineación (paralela o angular) | alguna de las tres |
+|---|---|---|---|---|
+| H_H (sano) | 32 | 0/32 = 0 % [0–11] | 0/32 = 0 % [0–11] | 0/32 = 0 % [0–11] |
+| R_U (desbalanceo de rotor) | 40 | 25/40 = 62 % [47–76] | 25/40 = 62 % [47–76] | 25/40 = 62 % [47–76] |
+| R_M (desalineacion de rotor) | 40 | 25/40 = 62 % [47–76] | 24/40 = 60 % [45–74] | 25/40 = 62 % [47–76] |
+| B_R (rotor doblado) | 40 | 25/40 = 62 % [47–76] | 20/40 = 50 % [35–65] | 25/40 = 62 % [47–76] |
+| K_A (barras rotas) | 40 | 18/40 = 45 % [31–60] | 10/40 = 25 % [14–40] | 18/40 = 45 % [31–60] |
+| S_W (bobinado del estator) | 40 | 20/40 = 50 % [35–65] | 10/40 = 25 % [14–40] | 20/40 = 50 % [35–65] |
+| V_U (desbalance de voltaje) | 40 | 15/40 = 38 % [24–53] | 3/40 = 8 % [3–20] | 15/40 = 38 % [24–53] |
+| F_B (rodamiento (sin geometria)) | 40 | 20/40 = 50 % [35–65] | 15/40 = 38 % [24–53] | 20/40 = 50 % [35–65] |
+
+Ventanas con la hipótesis ≥ 0.90, fila = estado real:
+| real | ventanas | desbalanceo | desalineación (paralela o angular) | alguna de las tres |
+|---|---|---|---|---|
+| H_H (sano) | 32 | 0/32 = 0 % [0–11] | 0/32 = 0 % [0–11] | 0/32 = 0 % [0–11] |
+| R_U (desbalanceo de rotor) | 40 | 0/40 = 0 % [0–9] | 25/40 = 62 % [47–76] | 25/40 = 62 % [47–76] |
+| R_M (desalineacion de rotor) | 40 | 0/40 = 0 % [0–9] | 24/40 = 60 % [45–74] | 24/40 = 60 % [45–74] |
+| B_R (rotor doblado) | 40 | 0/40 = 0 % [0–9] | 20/40 = 50 % [35–65] | 20/40 = 50 % [35–65] |
+| K_A (barras rotas) | 40 | 0/40 = 0 % [0–9] | 10/40 = 25 % [14–40] | 10/40 = 25 % [14–40] |
+| S_W (bobinado del estator) | 40 | 0/40 = 0 % [0–9] | 10/40 = 25 % [14–40] | 10/40 = 25 % [14–40] |
+| V_U (desbalance de voltaje) | 40 | 0/40 = 0 % [0–9] | 3/40 = 8 % [3–20] | 3/40 = 8 % [3–20] |
+| F_B (rodamiento (sin geometria)) | 40 | 0/40 = 0 % [0–9] | 15/40 = 38 % [24–53] | 15/40 = 38 % [24–53] |
+
+### Ottawa — indicador de cambio respecto de la línea base (sano, misma velocidad y carga)
+| real | ventanas | nivel ≥ elevado (≥ 1.25×) | muy elevado (≥ 2×) | razón: mediana (mín–máx) |
+|---|---|---|---|---|
+| H_H (sano) | 32 | 0/32 = 0 % [0–11] | 0/32 = 0 % [0–11] | 1.00 (0.94–1.04) |
+| R_U (desbalanceo de rotor) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 7.05 (2.51–10.91) |
+| R_M (desalineacion de rotor) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 7.07 (3.25–10.90) |
+| B_R (rotor doblado) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 4.94 (3.07–7.87) |
+| K_A (barras rotas) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 7.12 (3.17–9.47) |
+| S_W (bobinado del estator) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 4.31 (2.40–6.00) |
+| V_U (desbalance de voltaje) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 6.74 (2.68–10.79) |
+| F_B (rodamiento (sin geometria)) | 40 | 40/40 = 100 % [91–100] | 40/40 = 100 % [91–100] | 6.53 (3.82–8.85) |
+
+Por velocidad y carga (fallas = las 7 clases con falla; razón mediana y ventanas 'muy elevado'):
+| velocidad | carga | ventanas con falla | razón mediana | muy elevado |
+|---|---|---|---|---|
+| 15 Hz | sin carga | 35 | 8.00 | 35/35 = 100 % [90–100] |
+| 15 Hz | con carga | 35 | 7.62 | 35/35 = 100 % [90–100] |
+| 30 Hz | sin carga | 35 | 9.18 | 35/35 = 100 % [90–100] |
+| 30 Hz | con carga | 35 | 3.66 | 35/35 = 100 % [90–100] |
+| 45 Hz | sin carga | 35 | 6.77 | 35/35 = 100 % [90–100] |
+| 45 Hz | con carga | 35 | 3.67 | 35/35 = 100 % [90–100] |
+| 60 Hz | sin carga | 35 | 5.39 | 35/35 = 100 % [90–100] |
+| 60 Hz | con carga | 35 | 3.08 | 35/35 = 100 % [90–100] |
+
+### Ottawa — por CONDICIÓN (velocidad × carga; positiva si más de la mitad de sus ventanas) — sin_linea_base, hipótesis ≥ 0.50
+| real | condiciones | desbalanceo | desalineación |
+|---|---|---|---|
+| H_H (sano) | 8 | 6/8 = 75 % [41–93] | 6/8 = 75 % [41–93] |
+| R_U (desbalanceo de rotor) | 8 | 6/8 = 75 % [41–93] | 8/8 = 100 % [68–100] |
+| R_M (desalineacion de rotor) | 8 | 6/8 = 75 % [41–93] | 8/8 = 100 % [68–100] |
+| B_R (rotor doblado) | 8 | 5/8 = 62 % [31–86] | 8/8 = 100 % [68–100] |
+| K_A (barras rotas) | 8 | 6/8 = 75 % [41–93] | 8/8 = 100 % [68–100] |
+| S_W (bobinado del estator) | 8 | 5/8 = 62 % [31–86] | 7/8 = 88 % [53–98] |
+| V_U (desbalance de voltaje) | 8 | 5/8 = 62 % [31–86] | 7/8 = 88 % [53–98] |
+| F_B (rodamiento (sin geometria)) | 8 | 5/8 = 62 % [31–86] | 8/8 = 100 % [68–100] |
+
+### Ottawa — por CONDICIÓN (velocidad × carga; positiva si más de la mitad de sus ventanas) — con_linea_base, hipótesis ≥ 0.50
+| real | condiciones | desbalanceo | desalineación |
+|---|---|---|---|
+| H_H (sano) | 8 | 0/8 = 0 % [0–32] | 0/8 = 0 % [0–32] |
+| R_U (desbalanceo de rotor) | 8 | 5/8 = 62 % [31–86] | 8/8 = 100 % [68–100] |
+| R_M (desalineacion de rotor) | 8 | 5/8 = 62 % [31–86] | 8/8 = 100 % [68–100] |
+| B_R (rotor doblado) | 8 | 5/8 = 62 % [31–86] | 7/8 = 88 % [53–98] |
+| K_A (barras rotas) | 8 | 4/8 = 50 % [22–78] | 7/8 = 88 % [53–98] |
+| S_W (bobinado del estator) | 8 | 4/8 = 50 % [22–78] | 6/8 = 75 % [41–93] |
+| V_U (desbalance de voltaje) | 8 | 3/8 = 38 % [14–69] | 7/8 = 88 % [53–98] |
+| F_B (rodamiento (sin geometria)) | 8 | 4/8 = 50 % [22–78] | 8/8 = 100 % [68–100] |
+
+### Ottawa — por CONDICIÓN (velocidad × carga; positiva si más de la mitad de sus ventanas) — con_linea_base, hipótesis ≥ 0.90
+| real | condiciones | desbalanceo | desalineación |
+|---|---|---|---|
+| H_H (sano) | 8 | 0/8 = 0 % [0–32] | 0/8 = 0 % [0–32] |
+| R_U (desbalanceo de rotor) | 8 | 0/8 = 0 % [0–32] | 5/8 = 62 % [31–86] |
+| R_M (desalineacion de rotor) | 8 | 0/8 = 0 % [0–32] | 5/8 = 62 % [31–86] |
+| B_R (rotor doblado) | 8 | 0/8 = 0 % [0–32] | 4/8 = 50 % [22–78] |
+| K_A (barras rotas) | 8 | 0/8 = 0 % [0–32] | 2/8 = 25 % [7–59] |
+| S_W (bobinado del estator) | 8 | 0/8 = 0 % [0–32] | 2/8 = 25 % [7–59] |
+| V_U (desbalance de voltaje) | 8 | 0/8 = 0 % [0–32] | 1/8 = 12 % [2–47] |
+| F_B (rodamiento (sin geometria)) | 8 | 0/8 = 0 % [0–32] | 3/8 = 38 % [14–69] |
+
+### Ottawa — confianza mediana por condición, con línea base (R_U = desbalanceo real; R_M = desalineación real; H_H = sano)
+| real | velocidad | carga | desbalanceo | desal. paralela | desal. angular | velocidad usada |
+|---|---|---|---|---|---|---|
+| R_U | 15 Hz | sin carga | 0.00 | 0.60 | 0.50 | estimada |
+| R_U | 15 Hz | con carga | 0.00 | 0.60 | 0.50 | estimada |
+| R_U | 30 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_U | 30 Hz | con carga | 0.00 | 0.60 | 0.50 | estimada |
+| R_U | 45 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_U | 45 Hz | con carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_U | 60 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_U | 60 Hz | con carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_M | 15 Hz | sin carga | 0.00 | 0.60 | 0.50 | nominal |
+| R_M | 15 Hz | con carga | 0.00 | 0.60 | 0.50 | estimada |
+| R_M | 30 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_M | 30 Hz | con carga | 0.00 | 0.60 | 0.50 | estimada |
+| R_M | 45 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_M | 45 Hz | con carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_M | 60 Hz | sin carga | 0.75 | 1.00 | 0.50 | estimada |
+| R_M | 60 Hz | con carga | 0.75 | 1.00 | 0.50 | estimada |
+| H_H | 15 Hz | sin carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 15 Hz | con carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 30 Hz | sin carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 30 Hz | con carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 45 Hz | sin carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 45 Hz | con carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 60 Hz | sin carga | 0.00 | 0.00 | 0.00 | estimada |
+| H_H | 60 Hz | con carga | 0.00 | 0.00 | 0.00 | estimada |
+
+Hipótesis principal de rotor con línea base, por ventana (entre desbalanceo / desal. paralela / desal. angular; empate = misma confianza máxima):
+| real | ventanas | principal correcta (sin empate) | correcta empatada con otra | principal incorrecta o ninguna |
+|---|---|---|---|---|
+| R_U (desbalanceo de rotor) | 40 | 0/40 = 0 % [0–9] | 0/40 = 0 % [0–9] | 40/40 = 100 % [91–100] |
+| R_M (desalineacion de rotor) | 40 | 39/40 = 98 % [87–100] | 0/40 = 0 % [0–9] | 1/40 = 2 % [0–13] |
+
+### CWRU — caso único (135.mat, columna DE, 48 kHz indicada a mano, 1796 r/min declarados)
+| ventana de 2 s | hipótesis |
+|---|---|
+| 0 | rodamiento_pista_exterior:1.00 |
+| 1 | rodamiento_pista_exterior:1.00 |

@@ -1,0 +1,12 @@
+Velocidad estimada por la firma del rodamiento, señales sinteticas (la nominal se equivoca de -8 % a +8 %).
+
+SANO: velocidades inventadas 3 de 400 ensayos (0.8 %).
+
+Con falla: ensayos en que estima (E) y en que acierta, error <= 2 % de la real (A):
+  BPFO       sev 1: E 99 % A 99 % | sev 2: E 100 % A 100 % | sev 4: E 100 % A 100 %
+  BPFI       sev 1: E 39 % A 39 % | sev 2: E 100 % A 100 % | sev 4: E 100 % A 100 %
+  BSF        sev 1: E 10 % A 9 % | sev 2: E 99 % A 99 % | sev 4: E 99 % A 99 %
+  BPFO+BPFI  sev 1: E 99 % A 99 % | sev 2: E 100 % A 100 % | sev 4: E 100 % A 100 %
+
+Estima pero se equivoca (fuera de 2 %): 2 de 4177 estimaciones.
+Acierto segun el error de la nominal (con falla, severidad >= 2): -8 %: 100 %, -4 %: 100 %, +0 %: 100 %, +4 %: 100 %, +8 %: 100 %

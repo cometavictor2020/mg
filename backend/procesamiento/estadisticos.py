@@ -1,53 +1,41 @@
 import numpy as np
 from scipy.stats import kurtosis, skew
 
+from backend.procesamiento.ejes import ejes_en_columnas
+
 
 def calcular_estadisticos(datos):
     """
-    Calcula curtosis, factor de cresta y skewness de los ejes X, Y y Z.
+    Calcula curtosis, factor de cresta y skewness de los ejes de vibración.
 
     Parámetros:
         datos:
-            DataFrame con las columnas:
-            vibracion_x, vibracion_y y vibracion_z.
+            DataFrame con las columnas vibracion_x, vibracion_y y
+            vibracion_z. Desde D-062 basta con las de los ejes que el
+            sensor tiene (un sensor de un eje trae solo vibracion_x).
 
     Retorna:
         Diccionario con tres listas (curtosis, factor_cresta, skewness),
-        cada una con un valor por eje, listo para graficarse en React
-        con Recharts (BarChart).
+        cada una con un valor por eje presente, listo para graficarse en
+        React con Recharts (BarChart).
     """
 
-    columnas_requeridas = [
-        "vibracion_x",
-        "vibracion_y",
-        "vibracion_z",
-    ]
+    ejes_presentes = ejes_en_columnas(datos.columns)
 
-    columnas_faltantes = [
-        columna
-        for columna in columnas_requeridas
-        if columna not in datos.columns
-    ]
-
-    if columnas_faltantes:
+    if not ejes_presentes:
         raise ValueError(
             "Faltan columnas necesarias para calcular los estadísticos: "
-            + ", ".join(columnas_faltantes)
+            "vibracion_x, vibracion_y, vibracion_z"
         )
 
     curtosis_por_eje = []
     factor_cresta_por_eje = []
     skewness_por_eje = []
 
-    ejes = [
-        ("X", "vibracion_x"),
-        ("Y", "vibracion_y"),
-        ("Z", "vibracion_z"),
-    ]
+    for eje in ejes_presentes:
 
-    for nombre_eje, columna in ejes:
-
-        señal = datos[columna].to_numpy()
+        nombre_eje = eje.upper()
+        señal = datos[f"vibracion_{eje}"].to_numpy()
 
         valor_rms = np.sqrt(np.mean(np.square(señal)))
         valor_pico = np.max(np.abs(señal))

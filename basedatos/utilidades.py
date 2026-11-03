@@ -6,6 +6,26 @@ Responsabilidad:
 """
 
 
+def obtener_linea_base_activa(sesion, sensor_id):
+    """
+    La linea base activa de un sensor (D-056), en el formato que espera
+    diagnosticar_sensor(): {"valores": {...}, "fecha": "dd/mm/aaaa"}, o None
+    si el sensor no tiene ninguna. Un sensor tiene a lo mas una activa.
+    """
+    from basedatos.modelos import LineaBase
+
+    fila = (
+        sesion.query(LineaBase)
+        .filter(LineaBase.sensor_id == sensor_id, LineaBase.activa.is_(True))
+        .order_by(LineaBase.fecha_creacion.desc())
+        .first()
+    )
+    if not fila:
+        return None
+
+    return {"valores": fila.valores, "fecha": fila.fecha_creacion.strftime("%d/%m/%Y")}
+
+
 def obtener_o_crear(sesion, clase_modelo, nombre):
     """
     Busca una fila por nombre; si no existe, la crea.

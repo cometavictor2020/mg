@@ -1,0 +1,64 @@
+Validacion de desbalanceo y desalineacion con MAFAULDA (ventana de 2 s, velocidad del tacometro, linea base del normal mas cercano)
+
+Archivos evaluados: 350 (calibracion: 11, reserva: 339)
+Cada celda: % de archivos con esa hipotesis en confianza >= 0,70 (diagnostico principal). N entre parentesis.
+
+== Escenario: antes
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47          15 %      6 %      0 %           64 %  0.17
+desalineacion_vertical        0.51mm   49          35 %     24 %      0 %           29 %  0.18
+desalineacion_vertical        0.63mm   49          14 %     10 %      0 %           35 %  0.21
+desalineacion_vertical        1.27mm   49           4 %      4 %      0 %           51 %  0.18
+desalineacion_vertical        1.40mm   48           2 %      2 %      0 %           44 %  0.20
+desalineacion_vertical        1.78mm   49          10 %     10 %      0 %           31 %  0.24
+desalineacion_vertical        1.90mm   48           2 %      0 %      0 %           50 %  0.17
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desalineacion_vertical        0.51mm    2           0 %      0 %      0 %            0 %  0.32
+desalineacion_vertical        0.63mm    1           0 %      0 %      0 %            0 %  0.43
+desalineacion_vertical        1.27mm    1           0 %      0 %      0 %            0 %  0.29
+desalineacion_vertical        1.40mm    2           0 %      0 %      0 %            0 %  0.14
+desalineacion_vertical        1.78mm    1         100 %    100 %      0 %            0 %  0.25
+desalineacion_vertical        1.90mm    2           0 %      0 %      0 %           50 %  0.19
+
+== Escenario: solo_relacion
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47          15 %      2 %      0 %           64 %  0.17
+desalineacion_vertical        0.51mm   49          35 %      2 %      0 %           29 %  0.18
+desalineacion_vertical        0.63mm   49          14 %      4 %      0 %           35 %  0.21
+desalineacion_vertical        1.27mm   49           4 %      0 %      0 %           51 %  0.18
+desalineacion_vertical        1.40mm   48           2 %      0 %      0 %           44 %  0.20
+desalineacion_vertical        1.78mm   49          10 %      6 %      0 %           31 %  0.24
+desalineacion_vertical        1.90mm   48           2 %      0 %      0 %           50 %  0.17
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desalineacion_vertical        0.51mm    2           0 %      0 %      0 %            0 %  0.32
+desalineacion_vertical        0.63mm    1           0 %      0 %      0 %            0 %  0.43
+desalineacion_vertical        1.27mm    1           0 %      0 %      0 %            0 %  0.29
+desalineacion_vertical        1.40mm    2           0 %      0 %      0 %            0 %  0.14
+desalineacion_vertical        1.78mm    1         100 %    100 %      0 %            0 %  0.25
+desalineacion_vertical        1.90mm    2           0 %      0 %      0 %           50 %  0.19
+
+== Escenario: relacion_y_ejes
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47           0 %      2 %     13 %           83 %  0.17
+desalineacion_vertical        0.51mm   49           0 %     10 %     35 %           47 %  0.18
+desalineacion_vertical        0.63mm   49           0 %     29 %     14 %           55 %  0.21
+desalineacion_vertical        1.27mm   49           2 %      6 %      4 %           69 %  0.18
+desalineacion_vertical        1.40mm   48           0 %      8 %      0 %           85 %  0.20
+desalineacion_vertical        1.78mm   49           0 %     20 %      4 %           57 %  0.24
+desalineacion_vertical        1.90mm   48           0 %      8 %      2 %           85 %  0.17
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desalineacion_vertical        0.51mm    2           0 %      0 %      0 %            0 %  0.32
+desalineacion_vertical        0.63mm    1           0 %      0 %      0 %            0 %  0.43
+desalineacion_vertical        1.27mm    1           0 %    100 %      0 %            0 %  0.29
+desalineacion_vertical        1.40mm    2           0 %      0 %      0 %          100 %  0.14
+desalineacion_vertical        1.78mm    1         100 %    100 %    100 %            0 %  0.25
+desalineacion_vertical        1.90mm    2           0 %      0 %      0 %          100 %  0.19

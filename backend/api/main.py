@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.procesamiento.frecuencia import calcular_fft
 from backend.procesamiento.lectura_csv import leer_muestra_csv, leer_ventana_segundos
 from backend.procesamiento.estadisticos import calcular_estadisticos
-from backend.procesamiento.diagnostico import cargar_normativa
+from backend.procesamiento.diagnostico import cargar_normativa, resolver_velocidad
 from backend.procesamiento.diagnostico_rodamientos import (
     calcular_datos_grafico,
     evaluar_rodamiento,
@@ -17,8 +17,11 @@ from backend.procesamiento.diagnostico_rodamientos import (
 from basedatos.conexion import SesionLocal
 from basedatos.modelos import Usuario, Sensor, Medicion
 from seguridad.auth import verificar_password, crear_token_acceso, obtener_usuario_actual
-from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, tipos_sensor, reportes, rodamientos, mediciones, laboratorio, laboratorio_pso, alertas, analizador_pso
+from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, tipos_sensor, reportes, rodamientos, mediciones, laboratorio, laboratorio_pso, alertas, analizador_pso, notificaciones, lineas_base, importacion
 
+
+# La API no arranca si no puede leer los dos archivos de conocimiento (normativa y criterios del proyecto).
+cargar_normativa()
 
 app = FastAPI()
 
@@ -42,6 +45,9 @@ app.include_router(laboratorio.router)
 app.include_router(laboratorio_pso.router)
 app.include_router(alertas.router)
 app.include_router(analizador_pso.router)
+app.include_router(notificaciones.router)
+app.include_router(lineas_base.router)
+app.include_router(importacion.router)
 
 
 def obtener_medicion_mas_reciente(sesion, equipo_id):
@@ -198,10 +204,18 @@ def obtener_fft(
             frecuencia_maxima=frecuencia_maxima,
         )
 
+        # Velocidad con la que la pantalla marca 1x, 2x y 3x: la que se declaro al cargar la medicion
+        # o, si no se declaro, la nominal del equipo (la que usa el reporte para "1x esperado").
+        equipo = medicion.sensor.equipo if medicion.sensor else None
+        rpm_nominal = (equipo.atributos or {}).get("rpm_nominal") if equipo else None
+        rpm_referencia = medicion.rpm_real or rpm_nominal
+
         return {
             "frecuencia_muestreo": medicion.frecuencia_muestreo,
             "frecuencia_maxima": frecuencia_maxima,
             "cantidad_puntos": len(resultado_fft),
+            "rpm_referencia": rpm_referencia,
+            "origen_rpm": "declarada" if medicion.rpm_real else ("nominal" if rpm_nominal else None),
             "datos": resultado_fft,
         }
     finally:
@@ -276,11 +290,24 @@ def obtener_envolvente(
         )
 
         normativa = cargar_normativa()
+
+        # Misma velocidad que usa el diagnostico automatico (D-057): la
+        # declarada en la medicion, o la estimada desde el espectro, o la
+        # nominal - asi las frecuencias de falla marcadas en el grafico
+        # coinciden con las que evaluo el motor.
+        datos_fft = calcular_fft(
+            datos=datos_crudos, frecuencia_muestreo=medicion.frecuencia_muestreo, frecuencia_maxima=300
+        )
+        rpm_uso = resolver_velocidad(
+            datos_fft, rpm_nominal, medicion.rpm_real, normativa,
+            datos_crudos=datos_crudos, frecuencia_muestreo=medicion.frecuencia_muestreo, rodamiento=sensor.rodamiento,
+        )["rpm"]
+
         hipotesis = evaluar_rodamiento(
-            datos_crudos, medicion.frecuencia_muestreo, rpm_nominal, sensor.rodamiento, normativa
+            datos_crudos, medicion.frecuencia_muestreo, rpm_uso, sensor.rodamiento, normativa
         )
         datos_grafico = calcular_datos_grafico(
-            datos_crudos, medicion.frecuencia_muestreo, rpm_nominal, sensor.rodamiento, hipotesis
+            datos_crudos, medicion.frecuencia_muestreo, rpm_uso, sensor.rodamiento, hipotesis
         )
 
         return {

@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.fft import fft, fftfreq
 
+from backend.procesamiento.ejes import ejes_en_columnas
+
 
 def calcular_fft(
     datos,
@@ -8,12 +10,15 @@ def calcular_fft(
     frecuencia_maxima=300,
 ):
     """
-    Calcula la FFT de los ejes X, Y y Z de una señal de vibraciones.
+    Calcula la FFT de los ejes de una señal de vibraciones.
 
     Parámetros:
         datos:
-            DataFrame con las columnas:
-            vibracion_x, vibracion_y y vibracion_z.
+            DataFrame con las columnas vibracion_x, vibracion_y y
+            vibracion_z. Desde D-062 basta con las de los ejes que el
+            sensor tiene (un sensor de un eje trae solo vibracion_x): se
+            calcula la FFT de cada columna presente y no se inventa ninguna
+            para los ejes que faltan.
 
         frecuencia_muestreo:
             Cantidad de muestras tomadas por segundo, expresada en Hz.
@@ -23,25 +28,16 @@ def calcular_fft(
 
     Retorna:
         Lista de diccionarios preparada para enviarse como JSON
-        y ser graficada en React con Recharts.
+        y ser graficada en React con Recharts: una fila por frecuencia, con
+        "frecuencia" y una "amplitud_<eje>" por cada eje presente.
     """
 
-    columnas_requeridas = [
-        "vibracion_x",
-        "vibracion_y",
-        "vibracion_z",
-    ]
+    ejes = ejes_en_columnas(datos.columns)
 
-    columnas_faltantes = [
-        columna
-        for columna in columnas_requeridas
-        if columna not in datos.columns
-    ]
-
-    if columnas_faltantes:
+    if not ejes:
         raise ValueError(
             "Faltan columnas necesarias para calcular la FFT: "
-            + ", ".join(columnas_faltantes)
+            "vibracion_x, vibracion_y, vibracion_z"
         )
 
     cantidad_muestras = len(datos)
@@ -56,65 +52,35 @@ def calcular_fft(
         d=1 / frecuencia_muestreo,
     )[: cantidad_muestras // 2]
 
-    amplitud_x = (
-        2.0
-        / cantidad_muestras
-        * np.abs(
-            fft(datos["vibracion_x"].to_numpy())[
-                : cantidad_muestras // 2
-            ]
-        )
-    )
-
-    amplitud_y = (
-        2.0
-        / cantidad_muestras
-        * np.abs(
-            fft(datos["vibracion_y"].to_numpy())[
-                : cantidad_muestras // 2
-            ]
-        )
-    )
-
-    amplitud_z = (
-        2.0
-        / cantidad_muestras
-        * np.abs(
-            fft(datos["vibracion_z"].to_numpy())[
-                : cantidad_muestras // 2
-            ]
-        )
-    )
-
     mascara_frecuencias = (
         (frecuencias >= 0)
         & (frecuencias <= frecuencia_maxima)
     )
 
     frecuencias_filtradas = frecuencias[mascara_frecuencias]
-    amplitud_x_filtrada = amplitud_x[mascara_frecuencias]
-    amplitud_y_filtrada = amplitud_y[mascara_frecuencias]
-    amplitud_z_filtrada = amplitud_z[mascara_frecuencias]
+
+    amplitudes_filtradas = {}
+    for eje in ejes:
+        amplitud = (
+            2.0
+            / cantidad_muestras
+            * np.abs(
+                fft(datos[f"vibracion_{eje}"].to_numpy())[
+                    : cantidad_muestras // 2
+                ]
+            )
+        )
+        amplitudes_filtradas[eje] = amplitud[mascara_frecuencias]
 
     resultado = []
 
     for indice, frecuencia in enumerate(frecuencias_filtradas):
-        resultado.append(
-            {
-                "frecuencia": round(float(frecuencia), 4),
-                "amplitud_x": round(
-                    float(amplitud_x_filtrada[indice]),
-                    6,
-                ),
-                "amplitud_y": round(
-                    float(amplitud_y_filtrada[indice]),
-                    6,
-                ),
-                "amplitud_z": round(
-                    float(amplitud_z_filtrada[indice]),
-                    6,
-                ),
-            }
-        )
+        fila = {"frecuencia": round(float(frecuencia), 4)}
+        for eje in ejes:
+            fila[f"amplitud_{eje}"] = round(
+                float(amplitudes_filtradas[eje][indice]),
+                6,
+            )
+        resultado.append(fila)
 
     return resultado

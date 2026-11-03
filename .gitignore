@@ -28,3 +28,6 @@ respaldos/
 
 # PDFs de reportes generados (datos, no codigo - mismo criterio que respaldos/)
 reportes/
+
+# Datos sinteticos de desalineacion y su generador: uso local del desarrollador, no se sube (decision del usuario)
+herramientas/local_sin_git/

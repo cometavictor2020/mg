@@ -1,0 +1,3 @@
+experimento,archivo,variable,ventana,fs_indicada,rpm_declarada,conf_BPFO,conf_BPFI,conf_BSF,conf_FTF,conf_desbalanceo,conf_desal_paralela,conf_desal_angular,hipotesis
+cwru_caso,135.mat,X135_DE_time,0,48000,1796.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00
+cwru_caso,135.mat,X135_DE_time,1,48000,1796.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00

@@ -51,7 +51,7 @@ def evaluar_calidad_medicion(frecuencia_muestreo, duracion_segundos, frecuencia_
     regla_fs = config["frecuencia_muestreo"]["regla"]
     if frecuencia_muestreo and frecuencia_maxima_interes_hz:
         factor_minimo = regla_fs["factor_minimo_sobre_fmax"]
-        factor_recomendado = regla_fs["factor_recomendado_sobre_fmax"]
+        factor_recomendado = normativa["criterios_proyecto"]["calidad_medicion"]["frecuencia_muestreo"]["factor_recomendado_sobre_fmax"]
         factor_actual = frecuencia_muestreo / frecuencia_maxima_interes_hz
         frecuencia_minima_requerida = frecuencia_maxima_interes_hz * factor_minimo
         frecuencia_recomendada = frecuencia_maxima_interes_hz * factor_recomendado

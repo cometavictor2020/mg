@@ -1,0 +1,33 @@
+Linea base de varios registros (ver docstring de calibrar_linea_base_varios_registros.py para el diseno y la regla)
+
+=== CALIBRACION  (% de registros; columnas = variante; '1' = linea base de un registro, la de hoy)
+conjunto  escenario        metrica                          N       1    3max    5max   10max    5m2s   10m2s
+mafaulda  con_orientacion  deteccion de desbalanceo       334      32      36      38      43      40      44
+mafaulda  con_orientacion  falsa alarma del sano           50      28       8       2       0       0       0
+mafaulda  sin_orientacion  deteccion de desbalanceo       334      71      70      70      69      70      69
+mafaulda  sin_orientacion  falsa alarma del sano           50      24       6       2       0       0       0
+sintetico con_orientacion  deteccion de desalineacion     120      98      98      98      98      98      98
+sintetico con_orientacion  deteccion de desbalanceo       120      88      88      89      91      90      91
+sintetico con_orientacion  falsa alarma del sano          120      11       4       2       1       1       1
+sintetico sin_orientacion  deteccion de desalineacion     120      98      98      98      98      98      98
+sintetico sin_orientacion  deteccion de desbalanceo       120      98      98      98      98      98      98
+sintetico sin_orientacion  falsa alarma del sano          120      11       4       2       1       1       1
+sro       sin_orientacion  deteccion de desbalanceo       200     100     100     100     100     100     100
+sro       sin_orientacion  falsa alarma del sano          100       0       0       0       0       0       0
+
+=== RESERVA  (% de registros; columnas = variante; '1' = linea base de un registro, la de hoy)
+conjunto  escenario        metrica                          N       1    3max    5max   10max    5m2s   10m2s
+mafaulda  con_orientacion  deteccion de desbalanceo       332      28      33      35      42      37      42
+mafaulda  con_orientacion  falsa alarma del sano           48      10       0       0       0       0       0
+mafaulda  sin_orientacion  deteccion de desbalanceo       332      69      68      68      67      67      66
+mafaulda  sin_orientacion  falsa alarma del sano           48       8       0       0       0       0       0
+sintetico con_orientacion  deteccion de desalineacion     360     100     100     100     100     100     100
+sintetico con_orientacion  deteccion de desbalanceo       360      91      91      91      92      92      92
+sintetico con_orientacion  falsa alarma del sano          360      15       7       4       3       3       2
+sintetico sin_orientacion  deteccion de desalineacion     360      89      89      89      89      89      89
+sintetico sin_orientacion  deteccion de desbalanceo       360      99      99      99      99      99      99
+sintetico sin_orientacion  falsa alarma del sano          360      15       7       4       3       3       2
+sro       sin_orientacion  deteccion de desbalanceo       200     100     100     100     100     100     100
+sro       sin_orientacion  falsa alarma del sano          100       0       0       0       0       0       0
+
+variante elegida con la regla fijada de antemano (solo calibracion): 3max

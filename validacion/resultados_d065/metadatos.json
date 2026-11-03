@@ -1,0 +1,51 @@
+{
+  "fecha": "2026-10-28T10:13:55",
+  "python": "3.13.5",
+  "numpy": "2.3.4",
+  "pandas": "2.3.3",
+  "ventana_s": 2.0,
+  "umbrales": [
+    0.3,
+    0.5,
+    0.7,
+    0.9
+  ],
+  "experimentos": [
+    "mfpt_rodamientos",
+    "mfpt_velocidad",
+    "ottawa_rotor",
+    "cwru_caso"
+  ],
+  "mfpt": {
+    "archivos": [
+      "baseline_1.mat",
+      "baseline_2.mat",
+      "baseline_3.mat",
+      "OuterRaceFault_1.mat",
+      "OuterRaceFault_2.mat",
+      "OuterRaceFault_3.mat",
+      "OuterRaceFault_vload_1.mat",
+      "OuterRaceFault_vload_2.mat",
+      "OuterRaceFault_vload_3.mat",
+      "OuterRaceFault_vload_4.mat",
+      "OuterRaceFault_vload_5.mat",
+      "OuterRaceFault_vload_6.mat",
+      "OuterRaceFault_vload_7.mat",
+      "InnerRaceFault_vload_1.mat",
+      "InnerRaceFault_vload_2.mat",
+      "InnerRaceFault_vload_3.mat",
+      "InnerRaceFault_vload_4.mat",
+      "InnerRaceFault_vload_5.mat",
+      "InnerRaceFault_vload_6.mat",
+      "InnerRaceFault_vload_7.mat"
+    ],
+    "excluidos": [
+      "IntermediateSpeedBearing.mat",
+      "OilPumpBearing.mat",
+      "PlanetBearing.mat"
+    ],
+    "duplicados_omitidos": [
+      "5 - Analyses/InnerRaceFault_vload_7.mat"
+    ]
+  }
+}

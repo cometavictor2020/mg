@@ -48,6 +48,49 @@ function SeveridadIso({ severidad }) {
   )
 }
 
+const NOMBRES_NIVEL_CAMBIO = {
+  sin_cambio: "sin cambio relevante",
+  elevado: "elevado",
+  muy_elevado: "muy elevado",
+  disminuyo: "disminuyó",
+}
+
+// Cambio de la velocidad RMS respecto de la linea base (D-059): criterio
+// relativo para equipos donde la severidad ISO no aplica (bajo 15 kW).
+function CambioLineaBase({ cambio }) {
+  if (!cambio) return null
+
+  if (!cambio.aplicable) {
+    return (
+      <p className="reporte-severidad-iso-no-aplicable">
+        Cambio respecto de la línea base: no evaluable — {cambio.motivo_no_aplicable}
+      </p>
+    )
+  }
+
+  return (
+    <div className="reporte-severidad-iso">
+      <span>Cambio respecto de la línea base:</span>
+      <span className={`reporte-cambio-nivel reporte-cambio-nivel-${cambio.nivel}`}>
+        {NOMBRES_NIVEL_CAMBIO[cambio.nivel] ?? cambio.nivel}
+      </span>
+      <span className="config-mensaje">
+        ({cambio.velocidad_rms_actual_mm_s.toFixed(2)} mm/s RMS frente a {cambio.velocidad_rms_referencia_mm_s.toFixed(2)} mm/s
+        de la referencia: {cambio.razon} veces; banda {cambio.banda_hz[0]}–{Math.round(cambio.banda_hz[1])} Hz, peor eje)
+      </span>
+      <span
+        className="config-mensaje"
+        title="El nivel se decide con el peor eje de cada medición; un aumento grande en un eje secundario puede quedar oculto, por eso se muestra el cambio de cada eje."
+      >
+        Por eje:{" "}
+        {Object.entries(cambio.por_eje ?? {})
+          .map(([eje, valores]) => `${eje.toUpperCase()} ×${valores.razon ?? "—"}`)
+          .join(" · ")}
+      </span>
+    </div>
+  )
+}
+
 function CalidadMedicion({ calidad }) {
   if (!calidad || calidad.estado === "valida") return null
 
@@ -56,6 +99,53 @@ function CalidadMedicion({ calidad }) {
     <p className="reporte-calidad-medicion">
       Calidad de medición (ISO 13373-1) — {calidad.estado.replaceAll("_", " ")}: {mensajes.join(" ")}
     </p>
+  )
+}
+
+const ORIGEN_VELOCIDAD = {
+  medida: "declarada en la medición",
+  estimada: "estimada desde el espectro",
+  nominal: "nominal del equipo",
+}
+
+function textoPico(pico) {
+  return pico ? `${pico.frecuencia.toFixed(1)} Hz (${Number(pico.amplitud).toPrecision(3)})` : "ninguno"
+}
+
+// Velocidad de giro usada y control de consistencia (D-057/D-058): que
+// frecuencia de 1x se esperaba, que pico se encontro dentro de la ventana y
+// cual es el pico dominante del espectro - para que quien analiza vea de un
+// vistazo si el 1x encontrado es creible, sin depender del calculo.
+function VelocidadGiro({ velocidad, verificacion }) {
+  if (!velocidad) return null
+
+  return (
+    <>
+      <p className="reporte-velocidad">
+        Velocidad de giro usada: {Math.round(velocidad.rpm)} r/min ({ORIGEN_VELOCIDAD[velocidad.origen] ?? velocidad.origen}
+        {velocidad.origen !== "nominal" &&
+          `, ${velocidad.desviacion_pct > 0 ? "+" : ""}${velocidad.desviacion_pct}% respecto de la nominal`}
+        )
+        {verificacion && (
+          <>
+            <br />
+            1x esperado: {verificacion.frecuencia_1x_esperada} Hz (±{verificacion.tolerancia_pct}%) · pico encontrado ahí:{" "}
+            {textoPico(verificacion.pico_1x)} · pico dominante del espectro: {textoPico(verificacion.pico_dominante)}
+          </>
+        )}
+      </p>
+
+      {verificacion?.inconsistente && (
+        <p className="reporte-calidad-medicion">
+          Posible inconsistencia de velocidad: hay un pico en {textoPico(verificacion.pico_externo)}, fuera de la
+          ventana donde se busca el 1x
+          {verificacion.razon_pico_externo
+            ? `, ${verificacion.razon_pico_externo} veces el pico encontrado dentro de ella`
+            : " (dentro de la ventana no se encontró ningún pico)"}
+          . La velocidad usada puede no ser la real: declárala al cargar la medición.
+        </p>
+      )}
+    </>
   )
 }
 
@@ -69,7 +159,12 @@ function TarjetaSensor({ sensor }) {
       {sensor.tiene_medicion && (
         <>
           <SeveridadIso severidad={sensor.diagnostico.severidad_iso} />
+          <CambioLineaBase cambio={sensor.diagnostico.cambio_linea_base} />
           <CalidadMedicion calidad={sensor.diagnostico.calidad_medicion} />
+          <VelocidadGiro
+            velocidad={sensor.diagnostico.velocidad}
+            verificacion={sensor.diagnostico.verificacion_velocidad}
+          />
 
           {sensor.diagnostico.hipotesis.length === 0 && (
             <p className="config-mensaje">

@@ -1,0 +1,11 @@
+experimento,archivo,variable,ventana,fs_indicada,rpm_declarada,conf_BPFO,conf_BPFI,conf_BSF,conf_FTF,conf_desbalanceo,conf_desal_paralela,conf_desal_angular,hipotesis
+cwru_caso,135.mat,X135_DE_time,0,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,1,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,2,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,3,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,4,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,5,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,6,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,7,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,8,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75
+cwru_caso,135.mat,X135_DE_time,9,12000,1796.0,1.0,0.75,0.0,1.0,0.0,0.0,0.0,rodamiento_pista_exterior:1.00; rodamiento_jaula:1.00; rodamiento_pista_interior:0.75

@@ -6,6 +6,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,6 +39,14 @@ const ETIQUETAS_FALLA = {
 
 // Mismos umbrales que Reportes.jsx/Laboratorio.jsx (nivelConfianza) -
 // una hipotesis de alta confianza es la que dispara la alerta roja.
+// Cambio de la vibracion respecto de la linea base (D-059) -> estilo del badge.
+const NIVEL_ALERTA_CAMBIO = {
+  sin_cambio: "baja",
+  disminuyo: "baja",
+  elevado: "media",
+  muy_elevado: "alta",
+}
+
 function nivelAlertaDe(confianza) {
   if (confianza >= 0.7) return "alta"
   if (confianza >= 0.5) return "media"
@@ -51,6 +60,27 @@ function nivelSeveridadIsoDe(zona) {
   if (zona === "D") return "alta"
   if (zona === "C") return "media"
   return "baja"
+}
+
+// Ejes de vibracion que dibuja cada grafico (D-062): un sensor puede medir 1 o
+// 3 ejes y el archivo trae solo las columnas de los que tiene, asi que se
+// dibujan los que existen en los datos y no siempre X, Y y Z.
+const EJES_GRAFICO = [
+  { clave: "x", nombre: "Eje X", color: "#14b8a6" },
+  { clave: "y", nombre: "Eje Y", color: "#38bdf8" },
+  { clave: "z", nombre: "Eje Z", color: "#a78bfa" },
+]
+
+function ejesPresentes(filas, prefijo) {
+  const primera = filas?.[0]
+  if (!primera) return EJES_GRAFICO
+  return EJES_GRAFICO.filter((eje) => `${prefijo}${eje.clave}` in primera)
+}
+
+function textoEjes(ejes) {
+  const letras = ejes.map((eje) => eje.clave.toUpperCase())
+  if (letras.length === 1) return `del eje ${letras[0]}`
+  return `de los ejes ${letras.slice(0, -1).join(", ")} y ${letras[letras.length - 1]}`
 }
 
 // Mismo mapeo que Laboratorio.jsx: de la falla de una hipotesis a la
@@ -95,6 +125,10 @@ function AnalizadorVibraciones({
   // informa el backend (Nyquist real de la medicion, con
   // rango_completo=true) para que el eje del gráfico se adapte solo.
   const [frecuenciaMaximaFFT, setFrecuenciaMaximaFFT] = useState(300)
+  // Velocidad con la que se marcan 1x/2x/3x en el espectro y rango de frecuencia que se ve
+  // ("completo" = hasta el Nyquist; los picos de 1x, 2x y 3x solo se aprecian en el rango corto).
+  const [referenciaGiroFFT, setReferenciaGiroFFT] = useState(null)
+  const [rangoFFT, setRangoFFT] = useState("300")
   const [datosEstadisticos, setDatosEstadisticos] = useState(
     ESTADISTICOS_VACIOS
   )
@@ -199,6 +233,19 @@ function AnalizadorVibraciones({
     })
   }, [datos])
 
+  // Espectro FFT: rango que se ve (sin el 0 Hz, que es el desplazamiento del sensor) y
+  // marcas de 1x, 2x y 3x con la velocidad de referencia.
+  const frecuenciaVisibleFFT = rangoFFT === "completo" ? frecuenciaMaximaFFT : Math.min(Number(rangoFFT), frecuenciaMaximaFFT)
+  const datosFFTVisibles = useMemo(
+    () => datosFFT.filter((fila) => fila.frecuencia > 0 && fila.frecuencia <= frecuenciaVisibleFFT),
+    [datosFFT, frecuenciaVisibleFFT]
+  )
+  const armonicosGiroFFT = referenciaGiroFFT
+    ? [1, 2, 3]
+        .map((k) => ({ nombre: `${k}x`, frecuencia: (k * referenciaGiroFFT.rpm) / 60 }))
+        .filter((armonico) => armonico.frecuencia <= frecuenciaVisibleFFT)
+    : []
+
   useEffect(() => {
     if (!equipoSeleccionado) {
       return
@@ -213,6 +260,7 @@ function AnalizadorVibraciones({
     setDatosEnvolvente(null)
     setMensajeEnvolvente("")
     setFrecuenciaMaximaFFT(300)
+    setReferenciaGiroFFT(null)
 
     // Cambiar de equipo/sensor descarta cualquier vista de Hilbert/PSO
     // que se hubiera pedido para el sensor anterior - evita mostrar un
@@ -279,6 +327,9 @@ function AnalizadorVibraciones({
       .then((respuestaFFT) => {
         setDatosFFT(respuestaFFT.datos)
         setFrecuenciaMaximaFFT(respuestaFFT.frecuencia_maxima)
+        setReferenciaGiroFFT(
+          respuestaFFT.rpm_referencia ? { rpm: respuestaFFT.rpm_referencia, origen: respuestaFFT.origen_rpm } : null
+        )
 
         setMensajeFFT(
           `Se cargaron ${respuestaFFT.cantidad_puntos} puntos de frecuencia, hasta ${Math.round(respuestaFFT.frecuencia_maxima)} Hz (Nyquist)${etiquetaSensor}`
@@ -343,9 +394,102 @@ function AnalizadorVibraciones({
       .catch(() => setAlertaDiagnostico({ hipotesis: [], advertencia: "No fue posible evaluar este equipo" }))
   }, [equipoSeleccionado, recargarContador])
 
+  // Linea base (referencia sana) del sensor elegido (D-056): sin ella, el
+  // motor acota la confianza de desbalanceo/desalineacion porque no puede
+  // distinguir "hay un pico en 1x" de "el 1x es anormal".
+  const [lineaBase, setLineaBase] = useState(null)
+  const [mensajeLineaBase, setMensajeLineaBase] = useState("")
+  const [guardandoLineaBase, setGuardandoLineaBase] = useState(false)
+  // Con cuantas mediciones se arma la referencia. El rango y la cantidad recomendada vienen del backend
+  // (criterios_proyecto.linea_base_varios_registros); hasta que llegan, 1 (la linea base de siempre).
+  const [rangoRegistros, setRangoRegistros] = useState({ minimo: 1, maximo: 1 })
+  const [cantidadRegistros, setCantidadRegistros] = useState(null)
+
+  useEffect(() => {
+    setMensajeLineaBase("")
+    if (!sensorParaDatos) {
+      setLineaBase(null)
+      return
+    }
+
+    apiFetch(`http://127.0.0.1:8000/api/lineas-base?sensor_id=${sensorParaDatos.id}`)
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : { linea_base: null }))
+      .then((datos) => {
+        setLineaBase(datos.linea_base)
+        if (datos.registros_minimos) {
+          setRangoRegistros({ minimo: datos.registros_minimos, maximo: datos.registros_maximos })
+          setCantidadRegistros((actual) => actual ?? datos.registros_minimos)
+        }
+      })
+      .catch(() => setLineaBase(null))
+  }, [sensorParaDatos?.id, recargarContador])
+
+  async function marcarLineaBase() {
+    if (!sensorParaDatos) return
+
+    const cantidad = cantidadRegistros ?? rangoRegistros.minimo
+    const confirmado = window.confirm(
+      `¿Confirmas que el equipo estaba sano y operando en condiciones normales cuando se ${
+        cantidad === 1 ? "tomó la última medición" : `tomaron las últimas ${cantidad} mediciones`
+      } del sensor ${sensorParaDatos.codigo}?\n\n` +
+        "Se usarán como referencia: las mediciones siguientes se compararán contra " +
+        `${cantidad === 1 ? "ella" : "ellas (para cada armónico, el valor máximo entre las mediciones)"}. ` +
+        `Si ${cantidad === 1 ? "esa medición tenía" : "alguna tenía"} una falla, el sistema la considerará normal.`
+    )
+    if (!confirmado) return
+
+    setGuardandoLineaBase(true)
+    setMensajeLineaBase("")
+    try {
+      const respuesta = await apiFetch("http://127.0.0.1:8000/api/lineas-base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sensor_id: sensorParaDatos.id, confirmado_sano: true, cantidad_registros: cantidad }),
+      })
+      const datos = await respuesta.json()
+      if (!respuesta.ok) {
+        throw new Error(typeof datos.detail === "string" ? datos.detail : "No se pudo marcar la línea base")
+      }
+      setLineaBase(datos)
+      setRecargarContador((actual) => actual + 1)
+    } catch (error) {
+      setMensajeLineaBase(error.message)
+    } finally {
+      setGuardandoLineaBase(false)
+    }
+  }
+
+  async function quitarLineaBase() {
+    if (!lineaBase) return
+
+    const confirmado = window.confirm(
+      `¿Estás seguro que deseas quitar la línea base del sensor ${sensorParaDatos?.codigo}? ` +
+        "Sin ella, la confianza de desbalanceo y desalineación vuelve a quedar acotada."
+    )
+    if (!confirmado) return
+
+    setGuardandoLineaBase(true)
+    setMensajeLineaBase("")
+    try {
+      const respuesta = await apiFetch(`http://127.0.0.1:8000/api/lineas-base/${lineaBase.id}`, {
+        method: "DELETE",
+      })
+      if (!respuesta.ok) {
+        throw new Error("No se pudo quitar la línea base")
+      }
+      setLineaBase(null)
+      setRecargarContador((actual) => actual + 1)
+    } catch (error) {
+      setMensajeLineaBase(error.message)
+    } finally {
+      setGuardandoLineaBase(false)
+    }
+  }
+
   const peorHipotesis = alertaDiagnostico?.hipotesis?.[0] ?? null
   const nivelAlerta = peorHipotesis ? nivelAlertaDe(peorHipotesis.confianza) : null
   const severidadIso = alertaDiagnostico?.severidad_iso ?? null
+  const cambioLineaBase = alertaDiagnostico?.cambio_linea_base ?? null
 
   // Lista de candidatas a optimizar con PSO, ordenada por prioridad
   // (misma confianza con la que datosEnvolvente.hipotesis ya viene
@@ -541,6 +685,29 @@ function AnalizadorVibraciones({
                   </span>
                 )}
 
+                {alertaDiagnostico?.advertencias_velocidad?.length > 0 && (
+                  <span
+                    className="alerta-diagnostico alerta-diagnostico-media"
+                    title={alertaDiagnostico.advertencias_velocidad
+                      .map(
+                        (a) =>
+                          `Sensor ${a.sensor_codigo}: 1x esperado en ${a.frecuencia_1x_esperada} Hz, pico mayor en ${a.frecuencia_pico_externo} Hz`
+                      )
+                      .join("\n")}
+                  >
+                    Posible inconsistencia de velocidad: revisa la velocidad real (ver reporte)
+                  </span>
+                )}
+
+                {cambioLineaBase && (
+                  <span
+                    className={`alerta-diagnostico alerta-diagnostico-${NIVEL_ALERTA_CAMBIO[cambioLineaBase.nivel] ?? "baja"}`}
+                    title={`Sensor ${cambioLineaBase.sensor_codigo} — ${cambioLineaBase.velocidad_rms_actual_mm_s?.toFixed(2)} mm/s RMS frente a ${cambioLineaBase.velocidad_rms_referencia_mm_s?.toFixed(2)} mm/s de la línea base (banda ${cambioLineaBase.banda_hz?.[0]}–${Math.round(cambioLineaBase.banda_hz?.[1])} Hz, peor eje). Criterio relativo del proyecto, no una norma.`}
+                  >
+                    Cambio vs. línea base: ×{cambioLineaBase.razon} ({cambioLineaBase.nivel.replaceAll("_", " ")})
+                  </span>
+                )}
+
                 {severidadIso && (
                   <span
                     className={`alerta-diagnostico alerta-diagnostico-${nivelSeveridadIsoDe(severidadIso.zona)}`}
@@ -620,6 +787,73 @@ function AnalizadorVibraciones({
                   {sensorParaDatos?.estado ?? "Sin información"}
                 </strong>
               </article>
+
+              <article className="dato-equipo">
+                <span>Línea base</span>
+                {!sensorParaDatos ? (
+                  <strong>Sin sensor</strong>
+                ) : lineaBase ? (
+                  <>
+                    <strong title="Referencia sana contra la que se comparan las mediciones de este sensor">
+                      Marcada el {new Date(lineaBase.fecha_creacion).toLocaleDateString("es-CL")}
+                      {" — "}
+                      {lineaBase.n_registros === 1 ? "1 registro" : `${lineaBase.n_registros} registros`}
+                    </strong>
+                    {lineaBase.avisos?.map((aviso, indice) => (
+                      <small key={`${aviso.codigo}-${indice}`} className="aviso-linea-base">
+                        {aviso.mensaje}
+                      </small>
+                    ))}
+                    {!lineaBase.indicador_cambio_disponible && (
+                      <small className="mensaje-linea-base">
+                        Sin indicador de cambio: la medición no declaraba una unidad reconocida. Márcala de nuevo con una que sí.
+                      </small>
+                    )}
+                    <button
+                      type="button"
+                      className="boton-cargar-datos boton-linea-base"
+                      onClick={quitarLineaBase}
+                      disabled={guardandoLineaBase}
+                    >
+                      Quitar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <strong title="Sin referencia, la confianza de desbalanceo y desalineación queda acotada">
+                      Sin línea base
+                    </strong>
+                    <label
+                      className="registros-linea-base"
+                      title={`Cuántas de las últimas mediciones sanas se usan como referencia. Se recomiendan al menos ${rangoRegistros.minimo}: con varias, la variación normal entre mediciones no se confunde con una falla.`}
+                    >
+                      Mediciones sanas a usar
+                      <select
+                        className="selector-sensor-rodamiento"
+                        value={cantidadRegistros ?? rangoRegistros.minimo}
+                        onChange={(e) => setCantidadRegistros(Number(e.target.value))}
+                        disabled={guardandoLineaBase}
+                      >
+                        {Array.from({ length: rangoRegistros.maximo }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>
+                            {n === 1 ? "La última (1)" : `Las últimas ${n}`}
+                            {n === rangoRegistros.minimo ? " — recomendado" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      className="boton-cargar-datos boton-linea-base"
+                      onClick={marcarLineaBase}
+                      disabled={guardandoLineaBase}
+                    >
+                      Marcar como línea base
+                    </button>
+                  </>
+                )}
+                {mensajeLineaBase && <small className="mensaje-linea-base">{mensajeLineaBase}</small>}
+              </article>
             </div>
           </section>
 
@@ -642,7 +876,7 @@ function AnalizadorVibraciones({
 
           {pestanaActiva === "tiempo" && (
             <section className="tarjeta">
-              <h3>Vibración de los ejes X, Y y Z</h3>
+              <h3>Vibración {textoEjes(ejesPresentes(datosVisualizacion, "vibracion_"))}</h3>
 
               <p>
                 Se muestran {datosVisualizacion.length} muestras reales
@@ -690,38 +924,19 @@ function AnalizadorVibraciones({
 
                     <Legend />
 
-                    <Line
-                      type="monotone"
-                      dataKey="vibracion_x"
-                      name="Eje X"
-                      stroke="#14b8a6"
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="vibracion_y"
-                      name="Eje Y"
-                      stroke="#38bdf8"
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="vibracion_z"
-                      name="Eje Z"
-                      stroke="#a78bfa"
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
+                    {ejesPresentes(datosVisualizacion, "vibracion_").map((eje) => (
+                      <Line
+                        key={eje.clave}
+                        type="monotone"
+                        dataKey={`vibracion_${eje.clave}`}
+                        name={eje.nombre}
+                        stroke={eje.color}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                        strokeWidth={1.8}
+                        isAnimationActive={false}
+                      />
+                    ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -741,15 +956,34 @@ function AnalizadorVibraciones({
 
               <p>{mensajeFFT}</p>
 
+              <div className="config-form-campo">
+                <label>Rango de frecuencia que se ve</label>
+                <select value={rangoFFT} onChange={(e) => setRangoFFT(e.target.value)}>
+                  <option value="300">0 – 300 Hz (1x, 2x, 3x)</option>
+                  <option value="1000">0 – 1000 Hz</option>
+                  <option value="5000">0 – 5000 Hz</option>
+                  <option value="completo">Completo (hasta el Nyquist)</option>
+                </select>
+              </div>
+              <p className="config-nota">
+                No se muestra la componente continua (0 Hz): es el desplazamiento del sensor, no vibración, y
+                aplasta la escala de los picos de interés.
+                {referenciaGiroFFT
+                  ? ` Las líneas punteadas marcan 1x, 2x y 3x con la velocidad ${
+                      referenciaGiroFFT.origen === "declarada" ? "declarada al cargar la medición" : "nominal del equipo"
+                    } (${referenciaGiroFFT.rpm} r/min); un pico algo corrido respecto de la línea indica que el motor gira a otra velocidad.`
+                  : " No hay velocidad declarada ni nominal: no se pueden marcar 1x, 2x y 3x."}
+              </p>
+
               <div style={{ width: "100%", height: "400px" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={datosFFT}>
+                  <LineChart data={datosFFTVisibles}>
                     <CartesianGrid strokeDasharray="3 3" />
 
                     <XAxis
                       dataKey="frecuencia"
                       type="number"
-                      domain={[0, frecuenciaMaximaFFT]}
+                      domain={[0, frecuenciaVisibleFFT]}
                       label={{
                         value: "Frecuencia [Hz]",
                         position: "insideBottom",
@@ -769,35 +1003,33 @@ function AnalizadorVibraciones({
 
                     <Legend />
 
-                    <Line
-                      type="linear"
-                      dataKey="amplitud_x"
-                      name="FFT Eje X"
-                      stroke="#14b8a6"
-                      dot={false}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
+                    {armonicosGiroFFT.map((armonico) => (
+                      <ReferenceLine
+                        key={armonico.nombre}
+                        x={armonico.frecuencia}
+                        stroke="#94a3b8"
+                        strokeDasharray="4 4"
+                        label={{
+                          value: `${armonico.nombre} ${armonico.frecuencia.toFixed(1)} Hz`,
+                          position: "top",
+                          fontSize: 10,
+                          fill: "#94a3b8",
+                        }}
+                      />
+                    ))}
 
-                    <Line
-                      type="linear"
-                      dataKey="amplitud_y"
-                      name="FFT Eje Y"
-                      stroke="#38bdf8"
-                      dot={false}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
-
-                    <Line
-                      type="linear"
-                      dataKey="amplitud_z"
-                      name="FFT Eje Z"
-                      stroke="#a78bfa"
-                      dot={false}
-                      strokeWidth={1.8}
-                      isAnimationActive={false}
-                    />
+                    {ejesPresentes(datosFFT, "amplitud_").map((eje) => (
+                      <Line
+                        key={eje.clave}
+                        type="linear"
+                        dataKey={`amplitud_${eje.clave}`}
+                        name={`FFT ${eje.nombre}`}
+                        stroke={eje.color}
+                        dot={false}
+                        strokeWidth={1.8}
+                        isAnimationActive={false}
+                      />
+                    ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>

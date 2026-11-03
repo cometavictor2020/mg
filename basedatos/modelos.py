@@ -8,7 +8,7 @@ Responsabilidad:
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime, JSON, Text
+from sqlalchemy import Boolean, Column, Integer, Float, String, ForeignKey, DateTime, JSON, Text, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -160,6 +160,16 @@ class Medicion(Base):
     # sin verificar todavia que los valores del archivo correspondan
     # realmente a ella (D-040 - ver limitaciones en validacion_medicion.py).
     unidad = Column(String(30))
+    # Velocidad de giro real al tomar la medicion (r/min), opcional (D-057).
+    # Un motor de induccion con carga gira por debajo de su velocidad
+    # nominal; si no se declara, el motor la estima desde el espectro.
+    rpm_real = Column(Float)
+    # Trazabilidad del importador (D-061): si el archivo original no tenia el
+    # formato interno y se adapto, aqui queda el nombre del archivo subido y el
+    # mapeo confirmado (columna -> eje, unidad, frecuencia). NULL = el archivo
+    # ya venia en el formato interno.
+    archivo_origen = Column(String(255))
+    mapeo_importacion = Column(JSON)
     ruta_archivo_local = Column(String(500))
     clave_s3 = Column(String(500))
     estado_respaldo_s3 = Column(String(30), default="pendiente")
@@ -232,3 +242,103 @@ class Reporte(Base):
     ruta_pdf = Column(String(500))
 
     equipo = relationship("Equipo")
+
+
+class Notificacion(Base):
+    """
+    Registro de cada aviso de alerta enviado (o que fallo al enviarse) por
+    un canal (correo, telegram) - sirve para no repetir el mismo aviso y
+    para auditar que se aviso y cuando (D-054, ver PROYECTO.md).
+    """
+
+    __tablename__ = "notificacion"
+
+    id = Column(Integer, primary_key=True)
+    equipo_id = Column(Integer, ForeignKey("equipo.id"), nullable=False)
+    medicion_id = Column(Integer, ForeignKey("medicion.id"))
+    # Identifica el hallazgo (ej. "falla:rodamiento_pista_exterior:sensor1",
+    # "iso_20816_3"), para detectar repeticiones.
+    clave = Column(String(200), nullable=False, index=True)
+    # Gravedad del hallazgo al avisar (1 = alta/zona C, 2 = muy alta/zona D).
+    nivel = Column(Integer, nullable=False)
+    canal = Column(String(20), nullable=False)
+    # Correo o chat id al que se envio: el "ya avisado" se lleva por
+    # destinatario, asi quien se agrega despues tambien recibe lo vigente.
+    destinatario = Column(String(200))
+    estado = Column(String(20), nullable=False)  # "enviada" | "fallida"
+    detalle = Column(Text)
+    fecha_envio = Column(DateTime, default=datetime.utcnow)
+
+    equipo = relationship("Equipo")
+
+
+class DestinatarioNotificacion(Base):
+    """
+    A quien se le envian las alertas (D-055): un correo o un chat de
+    Telegram, administrable desde Configuracion -> Notificaciones. Lista
+    global (no por equipo todavia). Se suman a los destinatarios "base" que
+    pueda haber en .env (NOTIF_CORREO_DESTINO, TELEGRAM_CHAT_ID).
+    """
+
+    __tablename__ = "destinatario_notificacion"
+    __table_args__ = (UniqueConstraint("canal", "direccion", name="uq_destinatario_canal_direccion"),)
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(150), nullable=False)
+    canal = Column(String(20), nullable=False)  # "correo" | "telegram"
+    # Correo electronico, o chat id numerico de Telegram (negativo en grupos).
+    direccion = Column(String(200), nullable=False)
+    activo = Column(Boolean, nullable=False, default=True)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+
+class PlantillaImportacion(Base):
+    """
+    Mapeo de importacion confirmado por una persona y guardado para reutilizarlo
+    (D-061): como leer los archivos de un mismo origen (instrumento, exportador,
+    investigador) y llevarlos al formato interno. "huella" identifica la forma
+    del archivo (nombres de columna en orden + delimitador): al subir otro
+    archivo con la misma huella, el sistema ofrece esta plantilla ya aplicada.
+    """
+
+    __tablename__ = "plantilla_importacion"
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(150), nullable=False, unique=True)
+    huella = Column(String(64), nullable=False, index=True)
+    # {"version", "formato", "columnas": {rol: nombre_de_columna}, "unidad", "frecuencia_muestreo", ...}
+    mapeo = Column(JSON, nullable=False)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+
+class LineaBase(Base):
+    """
+    Referencia de un sensor: valores medidos en una condicion SANA
+    confirmada por el usuario, contra los que se compara cada medicion
+    posterior (D-056, ver PROYECTO.md). Sin ella, el motor de reglas solo
+    sabe si "hay un pico" en 1x/2x/3x, no si es anormal para esa maquina.
+
+    No guarda la senal: guarda los valores resumidos (amplitud en 1x, 2x y
+    3x por eje) y apunta a la medicion de origen. Un sensor tiene a lo mas
+    una linea base activa; marcar otra desactiva la anterior (queda como
+    historial). Si se elimina el sensor o la medicion, se elimina la fila.
+
+    Puede resumir varias mediciones sanas (criterios_proyecto.
+    linea_base_varios_registros): medicion_id apunta a la mas reciente y las
+    demas (con n_registros, la regla y los avisos) quedan en valores, sin
+    cambiar el formato de "amplitudes" - no hace falta migrar la tabla, y una
+    fila sin esos campos es una linea base de un solo registro.
+    """
+
+    __tablename__ = "linea_base"
+
+    id = Column(Integer, primary_key=True)
+    sensor_id = Column(Integer, ForeignKey("sensor.id", ondelete="CASCADE"), nullable=False, index=True)
+    medicion_id = Column(Integer, ForeignKey("medicion.id", ondelete="CASCADE"), nullable=False)
+    # {"rpm", "tolerancia_pct", "amplitudes": {"1x": {"x","y","z"}, "2x": ..., "3x": ...}}
+    valores = Column(JSON, nullable=False)
+    activa = Column(Boolean, nullable=False, default=True)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+    sensor = relationship("Sensor")
+    medicion = relationship("Medicion")

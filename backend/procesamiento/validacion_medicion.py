@@ -3,9 +3,10 @@ Validacion de archivos CSV antes de aceptarlos como Medicion (D-040).
 
 Diseño extensible a proposito: cada "perfil" de validacion describe
 como verificar la estructura/consistencia de un archivo para una
-familia de sensor. Hoy solo existe el perfil "vibracion_triaxial" (el
-unico que el motor de diagnostico usa - ver Deuda tecnica en
-PROYECTO.md: calcular_fft exige columnas vibracion_x/y/z). Agregar un
+familia de sensor. Hoy existen "vibracion_triaxial" (columnas
+vibracion_x/y/z) y, desde D-062, "vibracion_uniaxial" (solo vibracion_x):
+el motor de diagnostico trabaja con los ejes que trae el archivo (ver
+backend/procesamiento/ejes.py), asi que ambos se procesan igual. Agregar un
 perfil nuevo para otra familia (temperatura, electrico, aceite, etc.)
 es agregar una funcion de verificacion y una entrada en
 PERFILES_VALIDACION, sin tocar el resto del pipeline de carga.
@@ -23,6 +24,8 @@ Ideas futuras en PROYECTO.md):
 """
 
 import pandas as pd
+
+from backend.procesamiento.ejes import EJES_POSIBLES
 
 COLUMNAS_VIBRACION_TRIAXIAL = ["timestamp", "vibracion_x", "vibracion_y", "vibracion_z"]
 COLUMNA_TEMPERATURA_OPCIONAL = "temperatura"
@@ -58,22 +61,34 @@ def _validar_columna_numerica(datos, columna, errores):
         errores.append(f"La columna '{columna}' tiene {no_numericos} valor(es) no numerico(s)")
 
 
-def validar_vibracion_triaxial(datos):
-    """Perfil de validacion para acelerometros triaxiales - el unico que
-    el motor de diagnostico consume hoy (backend/procesamiento/frecuencia.py)."""
+def validar_vibracion(datos, ejes):
+    """Validacion de una señal de vibracion con los ejes dados (D-062): timestamp y una
+    columna vibracion_<eje> por cada eje del sensor. Los perfiles de abajo la fijan para
+    sensores de 3 ejes (el caso original, D-040) y de uno."""
     errores = []
 
-    columnas_faltantes = [c for c in COLUMNAS_VIBRACION_TRIAXIAL if c not in datos.columns]
+    columnas_obligatorias = ["timestamp"] + [f"vibracion_{eje}" for eje in ejes]
+    columnas_faltantes = [c for c in columnas_obligatorias if c not in datos.columns]
     if columnas_faltantes:
         errores.append(f"Faltan columnas obligatorias: {', '.join(columnas_faltantes)}")
+        return errores
+
+    # El motor trabaja con los ejes que hay en el archivo: una columna de un eje que el
+    # sensor no tiene haria que se evaluara como si lo midiera.
+    sobrantes = [f"vibracion_{eje}" for eje in EJES_POSIBLES if eje not in ejes and f"vibracion_{eje}" in datos.columns]
+    if sobrantes:
+        errores.append(
+            f"El archivo trae columnas de ejes que este sensor no tiene: {', '.join(sobrantes)}. "
+            "Deja solo las de los ejes del sensor."
+        )
         return errores
 
     if len(datos) < 2:
         errores.append("El archivo necesita al menos 2 filas de datos para poder analizarse")
         return errores
 
-    for columna in ["vibracion_x", "vibracion_y", "vibracion_z"]:
-        _validar_columna_numerica(datos, columna, errores)
+    for eje in ejes:
+        _validar_columna_numerica(datos, f"vibracion_{eje}", errores)
 
     if COLUMNA_TEMPERATURA_OPCIONAL in datos.columns:
         _validar_columna_numerica(datos, COLUMNA_TEMPERATURA_OPCIONAL, errores)
@@ -90,8 +105,22 @@ def validar_vibracion_triaxial(datos):
     return errores
 
 
+def validar_vibracion_triaxial(datos):
+    """Perfil de validacion para acelerometros triaxiales (D-040): timestamp,
+    vibracion_x, vibracion_y y vibracion_z - mismas columnas y mismos mensajes de siempre."""
+    return validar_vibracion(datos, ("x", "y", "z"))
+
+
+def validar_vibracion_uniaxial(datos):
+    """Perfil para sensores de un eje (D-062): timestamp y vibracion_x. El unico eje
+    del sensor se llama X en el archivo; su orientacion real (radial, axial) se declara
+    en Sensor.configuracion, no en el nombre de la columna."""
+    return validar_vibracion(datos, ("x",))
+
+
 PERFILES_VALIDACION = {
     "vibracion_triaxial": validar_vibracion_triaxial,
+    "vibracion_uniaxial": validar_vibracion_uniaxial,
 }
 
 
@@ -105,7 +134,7 @@ def validar_archivo_medicion(ruta_archivo, perfil):
         raise ErrorValidacionMedicion(
             [
                 f"Todavia no existe un perfil de validacion para '{perfil}'. "
-                "Por ahora solo se pueden cargar mediciones de vibracion triaxial."
+                "Por ahora solo se pueden cargar mediciones de vibracion de 1 o 3 ejes."
             ]
         )
 
@@ -140,5 +169,12 @@ def determinar_perfil(sensor):
     ejes = (sensor.configuracion or {}).get("ejes", [])
     if tipo_sensor.familia == "Vibracion" and set(ejes) == {"X", "Y", "Z"}:
         return "vibracion_triaxial"
+    if tipo_sensor.familia == "Vibracion" and set(ejes) == {"X"}:
+        return "vibracion_uniaxial"
 
     return None
+
+
+def ejes_del_perfil(perfil):
+    """Ejes de vibracion que el perfil exige (para adaptar un archivo con el importador)."""
+    return {"vibracion_triaxial": ("x", "y", "z"), "vibracion_uniaxial": ("x",)}.get(perfil)

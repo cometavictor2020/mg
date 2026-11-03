@@ -30,7 +30,7 @@ from backend.procesamiento.diagnostico_rodamientos import (
     evaluar_rodamiento,
     serializar_datos_grafico,
 )
-from backend.procesamiento.lectura_mat import extraer_variable, inspeccionar_mat, leer_señal_cwru
+from backend.procesamiento.lectura_mat import extraer_variable, inspeccionar_mat, leer_señal_cwru, sugerir_lectura
 from seguridad.auth import obtener_usuario_actual
 
 router = APIRouter(
@@ -81,18 +81,30 @@ async def inspeccionar_mat_endpoint(archivo: UploadFile = File(...)):
     contenido = await archivo.read()
     try:
         variables = inspeccionar_mat(contenido)
+    except NotImplementedError:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "El archivo es un .mat de Matlab v7.3 (formato HDF5), que el lector todavía no soporta. "
+                "Guárdalo desde Matlab con la opción -v7 (save archivo.mat variables -v7) o conviértelo a CSV."
+            ),
+        )
     except Exception:
         raise HTTPException(status_code=422, detail="No fue posible leer el archivo como .mat")
 
-    return {"variables": variables}
+    # D-060: "sugerencias" propone (sin aplicar nada) que variable es la
+    # señal, la frecuencia de muestreo y la velocidad; "variables" no cambia.
+    return {"variables": variables, "sugerencias": sugerir_lectura(variables)}
 
 
 @router.post("/analizar-mat")
 async def analizar_mat(
     archivo: UploadFile = File(...),
-    frecuencia_muestreo: int = Form(...),
+    frecuencia_muestreo: Optional[int] = Form(None),
+    variable_frecuencia_muestreo: Optional[str] = Form(None),
     variable_señal: Optional[str] = Form(None),
     variable_rpm: Optional[str] = Form(None),
+    unidad_variable_rpm: str = Form("rpm"),
     rpm: Optional[float] = Form(None),
     numero_elementos_rodantes: int = Form(GEOMETRIA_SKF_6205_DEFAULT["numero_elementos_rodantes"]),
     diametro_elemento_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_elemento_mm"]),
@@ -103,6 +115,26 @@ async def analizar_mat(
         raise HTTPException(status_code=422, detail="El archivo debe ser un .mat")
 
     contenido = await archivo.read()
+
+    if unidad_variable_rpm not in ("rpm", "hz"):
+        raise HTTPException(status_code=422, detail="La unidad de la variable de velocidad debe ser 'rpm' o 'hz'.")
+
+    # D-060: la frecuencia de muestreo puede venir de una variable del archivo
+    # (datasets que la declaran, como los del MFPT). Si se elige, manda sobre
+    # el valor manual; si no, se usa el manual como siempre.
+    origen_frecuencia_muestreo = "manual"
+    if variable_frecuencia_muestreo:
+        try:
+            frecuencia_muestreo = round(float(extraer_variable(contenido, variable_frecuencia_muestreo)[0]))
+        except (ValueError, IndexError) as error:
+            raise HTTPException(status_code=422, detail=str(error) or "La variable de frecuencia de muestreo está vacía.")
+        origen_frecuencia_muestreo = variable_frecuencia_muestreo
+
+    if not frecuencia_muestreo or frecuencia_muestreo <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail="Indica la frecuencia de muestreo (o elige la variable del archivo que la trae).",
+        )
 
     # Si se elige una variable de señal manualmente (D-045), se usa esa
     # - sin depender de que el archivo siga la convencion de nombres de
@@ -119,6 +151,10 @@ async def analizar_mat(
                 rpm_archivo = float(extraer_variable(contenido, variable_rpm)[0])
             except ValueError as error:
                 raise HTTPException(status_code=422, detail=str(error))
+            # Un archivo que declara la velocidad de giro en Hz (rev/s) en vez
+            # de r/min (ej. "rate" = 25 en el MFPT): se convierte a r/min.
+            if unidad_variable_rpm == "hz":
+                rpm_archivo *= 60
 
         nombre_variable_señal = variable_señal
     else:
@@ -159,6 +195,7 @@ async def analizar_mat(
         "variable_señal": nombre_variable_señal,
         "rpm": rpm_final,
         "frecuencia_muestreo": frecuencia_muestreo,
+        "origen_frecuencia_muestreo": origen_frecuencia_muestreo,
         "cantidad_muestras": len(señal),
         "espectro_crudo": _calcular_espectro_crudo(señal, frecuencia_muestreo, FRECUENCIA_MAXIMA_ESPECTRO_CRUDO),
         "hipotesis": hipotesis,

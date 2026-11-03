@@ -1244,6 +1244,395 @@ function SeccionModelos() {
 }
 
 /* ========================================================== */
+/* NOTIFICACIONES (D-054/D-055)                                 */
+/* ========================================================== */
+
+const ETIQUETA_CANAL = { correo: "Correo", telegram: "Telegram" }
+
+function textoCredencialesConfiguradas(canal, estadoCanal) {
+  if (canal !== "telegram") return "credenciales configuradas."
+  if (estadoCanal.bot_usuario) {
+    return `credenciales configuradas — el token corresponde al bot ${estadoCanal.bot_usuario}. Las personas deben escribirle /start a ese bot.`
+  }
+  if (estadoCanal.bot_error) {
+    return `hay un token en .env, pero Telegram no lo aceptó (${estadoCanal.bot_error}). Revisa que sea el token completo y vigente.`
+  }
+  return "credenciales configuradas."
+}
+
+function formatearFechaUTC(texto) {
+  if (!texto) return ""
+  return new Date(`${texto}Z`).toLocaleString("es-CL")
+}
+
+function SeccionNotificaciones() {
+  const { items: destinatarios, cargando, error, recargar } = useColeccion("/api/notificaciones/destinatarios")
+  const { items: historial, recargar: recargarHistorial } = useColeccion("/api/notificaciones?limite=15")
+  const [estado, setEstado] = useState(null)
+  const [form, setForm] = useState({ nombre: "", canal: "correo", direccion: "" })
+  const [mensaje, setMensaje] = useState("")
+  const [resultadoPrueba, setResultadoPrueba] = useState([])
+  const [chats, setChats] = useState(null)
+  const [errorChats, setErrorChats] = useState("")
+  const [buscandoChats, setBuscandoChats] = useState(false)
+  const [cambiandoInterruptor, setCambiandoInterruptor] = useState(false)
+
+  useEffect(() => {
+    apiFetch(`${URL_BASE}/api/notificaciones/estado`)
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : null))
+      .then(setEstado)
+      .catch(() => setEstado(null))
+  }, [])
+
+  // Interruptor general: desactivar pide confirmación (apaga todos los avisos de una vez); activar no.
+  async function alternarInterruptor() {
+    const activar = !estado.habilitado
+    if (
+      !activar &&
+      !window.confirm(
+        "¿Estás seguro de que deseas desactivar TODAS las notificaciones (correo y Telegram)?\n\n" +
+          "Mientras estén desactivadas, el sistema no avisará de ninguna alerta, aunque se detecte una falla " +
+          "grave, y tampoco enviará mensajes de prueba."
+      )
+    ) {
+      return
+    }
+
+    setMensaje("")
+    setCambiandoInterruptor(true)
+    try {
+      const nuevoEstado = await enviarJSON(`${URL_BASE}/api/notificaciones/interruptor`, "PUT", { habilitado: activar })
+      setEstado((actual) => ({ ...actual, ...nuevoEstado }))
+    } catch (err) {
+      setMensaje(err.message)
+    } finally {
+      setCambiandoInterruptor(false)
+    }
+  }
+
+  async function agregar(evento) {
+    evento.preventDefault()
+    setMensaje("")
+    try {
+      await enviarJSON(`${URL_BASE}/api/notificaciones/destinatarios`, "POST", form)
+      setForm({ nombre: "", canal: form.canal, direccion: "" })
+      recargar()
+      if (form.canal === "telegram" && chats !== null) buscarChats()
+    } catch (err) {
+      setMensaje(err.message)
+    }
+  }
+
+  async function alternarActivo(destinatario) {
+    setMensaje("")
+    try {
+      await enviarJSON(`${URL_BASE}/api/notificaciones/destinatarios/${destinatario.id}`, "PUT", {
+        nombre: destinatario.nombre,
+        direccion: destinatario.direccion,
+        activo: !destinatario.activo,
+      })
+      recargar()
+    } catch (err) {
+      setMensaje(err.message)
+    }
+  }
+
+  async function eliminar(destinatario) {
+    if (!window.confirm(`¿Dejar de enviar alertas a "${destinatario.nombre}" (${destinatario.direccion})?`)) {
+      return
+    }
+    await apiFetch(`${URL_BASE}/api/notificaciones/destinatarios/${destinatario.id}`, { method: "DELETE" })
+    recargar()
+  }
+
+  async function probar(destinatario) {
+    setMensaje("")
+    setResultadoPrueba([])
+    try {
+      const ruta = destinatario
+        ? `/api/notificaciones/destinatarios/${destinatario.id}/prueba`
+        : "/api/notificaciones/prueba"
+      const resultados = await enviarJSON(`${URL_BASE}${ruta}`, "POST", {})
+      setResultadoPrueba(resultados)
+      recargarHistorial()
+    } catch (err) {
+      setMensaje(err.message)
+    }
+  }
+
+  async function buscarChats() {
+    setBuscandoChats(true)
+    setErrorChats("")
+    try {
+      const respuesta = await apiFetch(`${URL_BASE}/api/notificaciones/telegram/chats`)
+      const datos = await respuesta.json().catch(() => null)
+      if (!respuesta.ok) throw new Error(datos?.detail ?? "No fue posible consultar Telegram")
+      setChats(datos)
+    } catch (err) {
+      setChats(null)
+      setErrorChats(err.message)
+    } finally {
+      setBuscandoChats(false)
+    }
+  }
+
+  function usarChat(chat) {
+    setForm({ nombre: chat.nombre.replace(/\s*\(@.*\)$/, ""), canal: "telegram", direccion: chat.chat_id })
+  }
+
+  const esTelegram = form.canal === "telegram"
+
+  return (
+    <div className="config-seccion">
+      <p className="config-nota">
+        Aquí defines a quién se le envían las alertas. Cuando se carga una medición y el sistema detecta un hallazgo
+        grave, avisa a cada destinatario activo (una sola vez por hallazgo, salvo que empeore). Las credenciales del
+        servidor de correo y del bot de Telegram no se configuran aquí: van en el archivo <code>.env</code>.
+      </p>
+
+      {estado && (
+        <div className={`interruptor-notificaciones ${estado.habilitado ? "" : "interruptor-notificaciones-apagado"}`}>
+          <label className="interruptor">
+            <input
+              type="checkbox"
+              role="switch"
+              checked={estado.habilitado}
+              onChange={alternarInterruptor}
+              disabled={cambiandoInterruptor}
+              aria-label="Activar o desactivar todas las notificaciones"
+            />
+            <span className="interruptor-pista" aria-hidden="true">
+              <span className="interruptor-perilla" />
+            </span>
+          </label>
+
+          <div>
+            <strong>{estado.habilitado ? "Notificaciones activadas" : "Notificaciones desactivadas"}</strong>
+            <p>
+              {estado.habilitado
+                ? "El sistema avisa por correo y Telegram a los destinatarios activos."
+                : "El sistema no envía ningún aviso ni mensaje de prueba, aunque se detecte una falla grave."}{" "}
+              {estado.origen === "interruptor"
+                ? `Cambiado${estado.cambiado_por ? ` por ${estado.cambiado_por}` : ""} el ${formatearFechaUTC(estado.cambiado_en)}`
+                : "Estado inicial tomado de config/notificaciones.yaml."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {estado && (
+        <div className="config-nota">
+          {["correo", "telegram"].map((canal) => (
+            <p key={canal}>
+              <strong>{ETIQUETA_CANAL[canal]}:</strong>{" "}
+              {estado[canal].configurado
+                ? textoCredencialesConfiguradas(canal, estado[canal])
+                : `sin credenciales — faltan en .env: ${estado[canal].variables_faltantes.join(", ")}.`}
+            </p>
+          ))}
+        </div>
+      )}
+
+      <form className="config-form" onSubmit={agregar}>
+        <div className="config-form-campo">
+          <label>Canal</label>
+          <select
+            value={form.canal}
+            onChange={(e) => {
+              setForm({ ...form, canal: e.target.value, direccion: "" })
+              setMensaje("")
+            }}
+          >
+            <option value="correo">Correo electrónico</option>
+            <option value="telegram">Telegram</option>
+          </select>
+        </div>
+
+        <div className="config-form-campo">
+          <label>Nombre</label>
+          <input
+            value={form.nombre}
+            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+            placeholder="Ej. Jefe de mantención"
+            required
+          />
+        </div>
+
+        <div className="config-form-campo">
+          <label>{esTelegram ? "Chat ID de Telegram" : "Correo electrónico"}</label>
+          <input
+            type={esTelegram ? "text" : "email"}
+            value={form.direccion}
+            onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+            placeholder={esTelegram ? "Ej. 123456789 (negativo si es un grupo)" : "persona@empresa.cl"}
+            required
+          />
+        </div>
+
+        <div className="config-form-acciones">
+          <button type="submit" className="config-boton-primario">Agregar destinatario</button>
+          {esTelegram && (
+            <button type="button" className="config-boton-secundario" onClick={buscarChats} disabled={buscandoChats}>
+              {buscandoChats ? "Buscando…" : "Buscar quién le escribió al bot"}
+            </button>
+          )}
+        </div>
+
+        {mensaje && <p className="config-error">{mensaje}</p>}
+      </form>
+
+      {esTelegram && (
+        <div className="config-nota">
+          <p>
+            Para agregar a alguien sin buscar su chat id: pídele que abra el bot de Telegram y le escriba{" "}
+            <code>/start</code>; luego pulsa «Buscar quién le escribió al bot» y elige su nombre. Para un grupo,
+            agrega el bot al grupo y escribe cualquier mensaje. Telegram solo conserva esos mensajes unas 24 horas.
+          </p>
+          {errorChats && <p className="config-error">{errorChats}</p>}
+          {chats && chats.length === 0 && (
+            <p>
+              Nadie le ha escrito {estado?.telegram?.bot_usuario ? `a ${estado.telegram.bot_usuario}` : "al bot"} en
+              las últimas 24 horas. Comprueba que el chat donde escribiste /start sea con ese bot (no con BotFather)
+              y vuelve a buscar.
+            </p>
+          )}
+          {chats && chats.length > 0 && (
+            <table className="config-tabla">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Chat ID</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {chats.map((chat) => (
+                  <tr key={chat.chat_id}>
+                    <td>{chat.nombre}</td>
+                    <td>{chat.tipo === "private" ? "Persona" : chat.tipo}</td>
+                    <td>{chat.chat_id}</td>
+                    <td className="config-tabla-acciones">
+                      {chat.ya_agregado ? (
+                        <span>Ya agregado</span>
+                      ) : (
+                        <button type="button" onClick={() => usarChat(chat)}>Usar este chat</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {cargando && <p className="config-mensaje">Cargando…</p>}
+      {error && <p className="config-error">{error}</p>}
+
+      <table className="config-tabla">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Canal</th>
+            <th>Destino</th>
+            <th>Recibe alertas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {destinatarios.length === 0 && !cargando && (
+            <tr>
+              <td colSpan={5}>Todavía no hay destinatarios. Agrega el primero arriba.</td>
+            </tr>
+          )}
+          {destinatarios.map((destinatario) => {
+            const esDeEnv = destinatario.origen === "env"
+            return (
+              <tr key={destinatario.id ?? `env-${destinatario.canal}-${destinatario.direccion}`}>
+                <td>{destinatario.nombre}</td>
+                <td>{ETIQUETA_CANAL[destinatario.canal]}</td>
+                <td>{destinatario.direccion}</td>
+                <td>
+                  {esDeEnv ? (
+                    "Sí (se cambia en .env)"
+                  ) : (
+                    <input
+                      type="checkbox"
+                      checked={destinatario.activo}
+                      onChange={() => alternarActivo(destinatario)}
+                      aria-label={`Recibe alertas: ${destinatario.nombre}`}
+                    />
+                  )}
+                </td>
+                <td className="config-tabla-acciones">
+                  {!esDeEnv && (
+                    <>
+                      <button type="button" onClick={() => probar(destinatario)}>Enviar prueba</button>
+                      <button type="button" onClick={() => eliminar(destinatario)}>Eliminar</button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+
+      <div className="config-form-acciones">
+        <button type="button" className="config-boton-secundario" onClick={() => probar(null)}>
+          Enviar prueba a todos los activos
+        </button>
+      </div>
+
+      {resultadoPrueba.length > 0 && (
+        <div className="config-nota">
+          {resultadoPrueba.map((r, indice) => (
+            <p key={indice}>
+              {r.canal === "todos" ? (
+                <strong>Mensaje de prueba:</strong>
+              ) : (
+                <strong>{ETIQUETA_CANAL[r.canal]} → {r.nombre} ({r.direccion}):</strong>
+              )}{" "}
+              {r.resultado}
+            </p>
+          ))}
+        </div>
+      )}
+
+      <h3>Avisos recientes</h3>
+      <table className="config-tabla">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Equipo</th>
+            <th>Canal</th>
+            <th>Destinatario</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {historial.length === 0 && (
+            <tr>
+              <td colSpan={5}>Todavía no se ha enviado ningún aviso.</td>
+            </tr>
+          )}
+          {historial.map((aviso) => (
+            <tr key={aviso.id}>
+              <td>{formatearFechaUTC(aviso.fecha_envio)}</td>
+              <td>{aviso.equipo_nombre}</td>
+              <td>{ETIQUETA_CANAL[aviso.canal] ?? aviso.canal}</td>
+              <td>{aviso.destinatario ?? "—"}</td>
+              <td title={aviso.detalle ?? ""}>{aviso.estado === "enviada" ? "Enviada" : `Fallida: ${aviso.detalle ?? ""}`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/* ========================================================== */
 /* PAGINA PRINCIPAL                                             */
 /* ========================================================== */
 
@@ -1253,6 +1642,7 @@ const PESTANAS = [
   { id: "sensores", nombre: "Sensores" },
   { id: "rodamientos", nombre: "Rodamientos" },
   { id: "modelos", nombre: "Modelos de Aprendizaje" },
+  { id: "notificaciones", nombre: "Notificaciones" },
 ]
 
 function Configuracion({ sesion, onCerrarSesion, onIrAResumen, onIrAReportes, onIrALaboratorio, onSeleccionarEquipo }) {
@@ -1319,6 +1709,7 @@ function Configuracion({ sesion, onCerrarSesion, onIrAResumen, onIrAReportes, on
             {pestanaActiva === "sensores" && <SeccionSensores />}
             {pestanaActiva === "rodamientos" && <SeccionRodamientos />}
             {pestanaActiva === "modelos" && <SeccionModelos />}
+            {pestanaActiva === "notificaciones" && <SeccionNotificaciones />}
           </section>
         </main>
       </div>

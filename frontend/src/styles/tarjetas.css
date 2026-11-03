@@ -190,8 +190,40 @@
 
 .equipo-principal-datos {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
+}
+
+.boton-linea-base {
+  align-self: flex-start;
+  padding: 4px 9px;
+  font-size: 0.66rem;
+}
+
+.boton-linea-base:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.mensaje-linea-base {
+  color: var(--color-critico, #e5484d);
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+
+.aviso-linea-base {
+  color: var(--color-advertencia);
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+
+.registros-linea-base {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  color: var(--color-texto-secundario);
+  font-size: 0.66rem;
 }
 
 .dato-equipo {

@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends
 
 from basedatos.conexion import SesionLocal
 from basedatos.modelos import Equipo, Medicion, Sensor
+from basedatos.utilidades import obtener_linea_base_activa
 from backend.procesamiento.diagnostico import diagnosticar_sensor
 from backend.procesamiento.frecuencia import calcular_fft
 from backend.procesamiento.lectura_csv import leer_ventana_segundos
@@ -47,7 +48,15 @@ def _medicion_mas_reciente_de_sensor(sesion, sensor_id):
 
 @router.get("")
 def obtener_alerta_equipo(equipo_id: int):
+    return evaluar_equipo(equipo_id)
+
+
+def evaluar_equipo(equipo_id: int):
     """
+    Logica del endpoint de arriba, separada para que tambien la use el
+    envio de notificaciones (backend/notificaciones/servicio.py, D-054) sin
+    pasar por HTTP.
+
     Devuelve {"hipotesis": [...], "advertencia": str|None, "severidad_iso": dict|None}.
     "hipotesis" trae, de TODOS los sensores del equipo con medicion,
     todas sus hipotesis de falla (cada una con su sensor_id/sensor_codigo
@@ -96,6 +105,8 @@ def obtener_alerta_equipo(equipo_id: int):
 
         hipotesis_totales = []
         severidades_aplicables = []
+        advertencias_velocidad = []
+        cambios_aplicables = []
         for sensor in sensores:
             medicion = _medicion_mas_reciente_de_sensor(sesion, sensor.id)
             if not medicion:
@@ -121,6 +132,8 @@ def obtener_alerta_equipo(equipo_id: int):
                 tipo_soporte=tipo_soporte,
                 unidad_señal=medicion.unidad,
                 orientacion_ejes=(sensor.configuracion or {}).get("orientacion_ejes"),
+                linea_base=obtener_linea_base_activa(sesion, sensor.id),
+                rpm_real=medicion.rpm_real,
             )
 
             for hipotesis in diagnostico["hipotesis"]:
@@ -131,6 +144,25 @@ def obtener_alerta_equipo(equipo_id: int):
                         "sensor_codigo": sensor.codigo,
                     }
                 )
+
+            # D-058: si la velocidad usada puede no ser la real, se avisa
+            # tambien en la pantalla del equipo, no solo dentro del reporte.
+            verificacion = diagnostico.get("verificacion_velocidad")
+            if verificacion and verificacion["inconsistente"]:
+                advertencias_velocidad.append(
+                    {
+                        "sensor_id": sensor.id,
+                        "sensor_codigo": sensor.codigo,
+                        "frecuencia_1x_esperada": verificacion["frecuencia_1x_esperada"],
+                        "frecuencia_pico_externo": verificacion["pico_externo"]["frecuencia"],
+                    }
+                )
+
+            # D-059: indicador de cambio respecto de la linea base (sustituye a
+            # la severidad ISO en equipos bajo 15 kW).
+            cambio = diagnostico.get("cambio_linea_base")
+            if cambio and cambio["aplicable"]:
+                cambios_aplicables.append({**cambio, "sensor_id": sensor.id, "sensor_codigo": sensor.codigo})
 
             severidad = diagnostico.get("severidad_iso")
             if severidad and severidad["aplicable"]:
@@ -146,6 +178,15 @@ def obtener_alerta_equipo(equipo_id: int):
                 severidades_aplicables, key=lambda s: ORDEN_ZONAS_ISO.get(s["zona"], -1)
             )
 
-        return {"hipotesis": hipotesis_totales, "advertencia": None, "severidad_iso": peor_severidad}
+        # Igual criterio: el peor cambio entre los sensores del equipo.
+        peor_cambio = max(cambios_aplicables, key=lambda c: c["razon"]) if cambios_aplicables else None
+
+        return {
+            "hipotesis": hipotesis_totales,
+            "advertencia": None,
+            "severidad_iso": peor_severidad,
+            "cambio_linea_base": peor_cambio,
+            "advertencias_velocidad": advertencias_velocidad,
+        }
     finally:
         sesion.close()

@@ -1,0 +1,43 @@
+# Configuracion NO secreta de las notificaciones de alerta (D-054/D-055).
+# Las credenciales (SMTP, token de Telegram) viven en .env, nunca aqui:
+# este archivo se sube a Git.
+#
+# Credenciales en .env (ver backend/notificaciones/):
+#   Correo:   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD,
+#             SMTP_REMITENTE (opcional; por defecto SMTP_USER)
+#   Telegram: TELEGRAM_BOT_TOKEN
+# A QUIEN se le avisa se administra desde la aplicacion (Configuracion ->
+# Notificaciones). .env admite ademas destinatarios "base" opcionales:
+#   NOTIF_CORREO_DESTINO (correos separados por coma), TELEGRAM_CHAT_ID
+# Un canal sin sus credenciales se omite (queda registrado en el log), no falla.
+
+notificaciones:
+  habilitado: true
+
+  # Cuando se carga una medicion se evalua el equipo; se avisa solo si algun
+  # hallazgo cumple estos criterios. Los mismos umbrales que la pantalla usa
+  # para el nivel de alerta "alta" (nivelAlertaDe en AnalizadorVibraciones.jsx).
+  disparadores:
+    confianza_minima: 0.70       # hipotesis de falla con confianza >= este valor
+    confianza_muy_alta: 0.85     # sube el nivel del aviso (escalamiento)
+    zonas_iso:                   # zona ISO 20816-3 -> nivel del aviso
+      C: 1
+      D: 2
+    # Cambio de la velocidad RMS respecto de la linea base del sensor (D-059):
+    # el criterio relativo que reemplaza a las zonas ISO en equipos bajo 15 kW.
+    # Solo avisa los niveles listados; "elevado" (>= 1,25 veces) no avisa por
+    # defecto. Para avisarlo tambien, agregar `elevado: 1`.
+    cambio_linea_base:
+      muy_elevado: 1             # >= 2,0 veces la referencia
+
+  # El mismo hallazgo (misma falla en el mismo sensor, o la misma severidad
+  # ISO) no se vuelve a avisar dentro de esta ventana, salvo que empeore
+  # (nivel mayor que el ultimo avisado).
+  antiduplicacion:
+    horas_sin_repetir: 24
+
+  canales:
+    correo:
+      habilitado: true
+    telegram:
+      habilitado: true

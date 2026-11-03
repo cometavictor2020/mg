@@ -395,27 +395,20 @@ calidad_medicion:
 
   validaciones:
     saturacion_sensor:
-      criticidad: "critica"
       condicion_valida: false
 
-    muestras_perdidas:
-      criticidad: "alta"
-      porcentaje_max_admisible_default: 0.1
+    muestras_perdidas: {}
 
     frecuencia_muestreo:
-      criticidad: "critica"
       regla:
         tipo: "nyquist"
         factor_minimo_sobre_fmax: 2.0
-        factor_recomendado_sobre_fmax: 2.56
 
     duracion_registro:
-      criticidad: "media"
       regla:
         exigir_resolucion_frecuencia_adecuada: true
 
     rpm_disponible:
-      criticidad: "alta"
       requerido_para:
         - "1x"
         - "2x"
@@ -424,14 +417,12 @@ calidad_medicion:
         - "bandas_laterales_relativas"
 
     condicion_operacional_estable:
-      criticidad: "alta"
       variables_a_controlar:
         - "rpm"
         - "carga_pct"
         - "estado_proceso"
 
     montaje_sensor:
-      criticidad: "alta"
       valores_preferidos:
         - "esparrago"
         - "adhesivo_rigido"
@@ -441,7 +432,6 @@ calidad_medicion:
         - "sonda_manual"
 
     orientacion_sensor:
-      criticidad: "media"
       valores:
         - "radial_horizontal"
         - "radial_vertical"
@@ -545,7 +535,6 @@ features:
     pendiente_rms: {}
     pendiente_kurtosis: {}
     pendiente_energia_banda_alta: {}
-    dias_ventana_default: 30
 
 # -----------------------------------------------------------------------------
 # 6. REGLAS DIAGNÓSTICAS CURADAS
@@ -555,12 +544,6 @@ motor_diagnostico:
   metodo: "sistema_de_evidencias_ponderadas"
   diagnostico_unico_obligatorio: false
   permitir_multiples_fallas: true
-
-  pesos_evidencia:
-    fuerte: 3.0
-    moderada: 2.0
-    debil: 1.0
-    en_contra: -2.0
 
   reglas:
 
@@ -574,20 +557,15 @@ motor_diagnostico:
       evidencias:
         - feature: "amplitud_1x"
           condicion: "elevada"
-          peso: "fuerte"
         - feature: "direccion_radial"
           condicion: "predominante"
-          peso: "moderada"
         - feature: "amplitud_2x"
           condicion: "baja_respecto_1x"
-          peso: "debil"
       evidencias_en_contra:
         - feature: "vibracion_axial"
           condicion: "muy_elevada"
-          peso: "en_contra"
         - feature: "muchos_armonicos_1x"
           condicion: true
-          peso: "en_contra"
       recomendacion:
         - "verificar_acumulacion_material"
         - "verificar_elementos_rotantes"
@@ -598,13 +576,10 @@ motor_diagnostico:
       evidencias:
         - feature: "amplitud_1x"
           condicion: "elevada"
-          peso: "moderada"
         - feature: "vibracion_axial"
           condicion: "elevada"
-          peso: "fuerte"
         - feature: "amplitud_2x"
           condicion: "presente_o_elevada"
-          peso: "moderada"
       recomendacion:
         - "inspeccionar_acoplamiento"
         - "verificar_alineacion_angular"
@@ -615,13 +590,10 @@ motor_diagnostico:
       evidencias:
         - feature: "amplitud_2x"
           condicion: "elevada"
-          peso: "fuerte"
         - feature: "amplitud_1x"
           condicion: "presente"
-          peso: "moderada"
         - feature: "vibracion_radial"
           condicion: "elevada"
-          peso: "moderada"
       recomendacion:
         - "verificar_alineacion_paralela"
         - "inspeccionar_acoplamiento"
@@ -631,13 +603,10 @@ motor_diagnostico:
       evidencias:
         - feature: "numero_armonicos_significativos"
           condicion: "alto"
-          peso: "fuerte"
         - feature: "armonicos_1x"
           condicion: "1x_2x_3x_4x_elevados"
-          peso: "fuerte"
         - feature: "direccion_predominante"
           condicion: "radial_con_alta_direccionalidad"
-          peso: "moderada"
       recomendacion:
         - "revisar_pernos_y_anclajes_de_base"
         - "verificar_pata_suave_soft_foot"
@@ -647,13 +616,10 @@ motor_diagnostico:
       evidencias:
         - feature: "sub_armonicos"
           condicion: "presencia_0_5x_1_5x_2_5x"
-          peso: "fuerte"
         - feature: "numero_armonicos_significativos"
           condicion: "muy_alto"
-          peso: "fuerte"
         - feature: "senal_temporal"
           condicion: "impactiva_o_no_lineal"
-          peso: "moderada"
       recomendacion:
         - "inspeccionar_juegos_internos_en_cojinetes_o_rodamientos"
         - "revisar_ajustes_de_alojamientos"
@@ -663,13 +629,10 @@ motor_diagnostico:
       evidencias:
         - feature: "amplitud_1x"
           condicion: "elevada"
-          peso: "moderada"
         - feature: "vibracion_axial"
           condicion: "presente"
-          peso: "moderada"
         - feature: "fase"
           condicion: "diferencia_180_grados_a_traves_del_eje"
-          peso: "fuerte"
           requiere_feature: true
       recomendacion:
         - "verificar_runout_mecanico"
@@ -681,10 +644,8 @@ motor_diagnostico:
       evidencias:
         - feature: "amplitud_vibracion"
           condicion: "aumenta_fuertemente_cerca_frecuencia_natural"
-          peso: "fuerte"
         - feature: "variacion_rpm"
           condicion: "produce_cambio_abrupto_amplitud"
-          peso: "fuerte"
       requisitos:
         - "datos_a_distintas_rpm_o_runup_coastdown"
       recomendacion:
@@ -697,13 +658,10 @@ motor_diagnostico:
       evidencias:
         - feature: "espectro_envolvente_BPFO"
           condicion: "pico_significativo"
-          peso: "fuerte"
         - feature: "armonicos_BPFO"
           condicion: "presentes"
-          peso: "fuerte"
         - feature: "kurtosis"
           condicion: "elevada_o_rms_aceleracion_creciente"
-          peso: "moderada"
       requisitos:
         - "frecuencias_rodamiento_disponibles"
       recomendacion:
@@ -716,13 +674,10 @@ motor_diagnostico:
       evidencias:
         - feature: "espectro_envolvente_BPFI"
           condicion: "pico_significativo"
-          peso: "fuerte"
         - feature: "bandas_laterales_BPFI"
           condicion: "separadas_1x_alrededor_de_BPFI"
-          peso: "fuerte"
         - feature: "armonicos_BPFI"
           condicion: "presentes"
-          peso: "moderada"
       requisitos:
         - "frecuencias_rodamiento_disponibles"
       recomendacion:
@@ -734,10 +689,8 @@ motor_diagnostico:
       evidencias:
         - feature: "espectro_envolvente_BSF"
           condicion: "pico_significativo"
-          peso: "fuerte"
         - feature: "bandas_laterales_BSF"
           condicion: "separadas_FTF_alrededor_de_BSF"
-          peso: "moderada"
       requisitos:
         - "frecuencias_rodamiento_disponibles"
       recomendacion:
@@ -749,7 +702,6 @@ motor_diagnostico:
       evidencias:
         - feature: "espectro_envolvente_FTF"
           condicion: "pico_o_modulacion_significativa"
-          peso: "fuerte"
       requisitos:
         - "frecuencias_rodamiento_disponibles"
       recomendacion:
@@ -760,13 +712,10 @@ motor_diagnostico:
       evidencias:
         - feature: "energia_alta_frecuencia"
           condicion: "creciente"
-          peso: "fuerte"
         - feature: "kurtosis"
           condicion: "elevada_inicial_o_normal_con_rms_aceleracion_muy_alto"
-          peso: "moderada"
         - feature: "espectro_envolvente"
           condicion: "piso_de_ruido_elevado_en_alta_frecuencia"
-          peso: "moderada"
       recomendacion:
         - "verificar_tipo_y_cantidad_de_lubricante"
         - "revisar_intervalo_de_lubricacion"
@@ -780,13 +729,10 @@ motor_diagnostico:
       evidencias:
         - feature: "GMF"
           condicion: "elevada"
-          peso: "moderada"
         - feature: "bandas_laterales_GMF"
           condicion: "presentes"
-          peso: "fuerte"
         - feature: "impactos_periodicos"
           condicion: true
-          peso: "moderada"
       requisitos:
         - "numero_dientes_disponible"
       recomendacion:
@@ -799,10 +745,8 @@ motor_diagnostico:
       evidencias:
         - feature: "componente_2FL"
           condicion: "elevada_2_veces_frecuencia_linea"
-          peso: "fuerte"
         - feature: "amplitud_1x"
           condicion: "elevada"
-          peso: "moderada"
       recomendacion:
         - "verificar_entrehierro_air_gap"
         - "revisar_excentricidad_estatica_y_dinamica"
@@ -812,10 +756,8 @@ motor_diagnostico:
       evidencias:
         - feature: "componente_2FL"
           condicion: "elevada_2_veces_frecuencia_linea"
-          peso: "fuerte"
         - feature: "bandas_laterales_2FL"
           condicion: "presentes"
-          peso: "moderada"
       nota:
         - "Confirmar con mediciones eléctricas MCSA (Current Signature Analysis) si están disponibles."
       recomendacion:
@@ -829,10 +771,8 @@ motor_diagnostico:
       evidencias:
         - feature: "bandas_laterales_frecuencia_paso_polos"
           condicion: "presentes_alrededor_de_1X_y_sus_armonicos"
-          peso: "fuerte"
         - feature: "carga_motor"
           condicion: "suficiente_mayor_a_50_pct"
-          peso: "debil"
       nota:
         - "La frecuencia de paso de polos Fp = 2 * s * FL (s = deslizamiento, FL = freq línea)."
         - "No confirmar únicamente con vibración; requiere validación con MCSA."
@@ -848,10 +788,8 @@ motor_diagnostico:
       evidencias:
         - feature: "energia_banda_ancha"
           condicion: "elevada_en_alta_frecuencia"
-          peso: "fuerte"
         - feature: "senal_temporal"
           condicion: "aleatoria_impactiva"
-          peso: "moderada"
       recomendacion:
         - "verificar_NPSH_disponible"
         - "revisar_succion_y_filtros"
@@ -861,65 +799,7 @@ motor_diagnostico:
 # 7. MOTOR DE CONFIANZA DIAGNÓSTICA
 # -----------------------------------------------------------------------------
 
-confianza_diagnostico:
-  metodo: "score_normalizado_por_evidencia_disponible"
-
-  formula_conceptual: >
-    score = suma(pesos_evidencia_cumplida) /
-            suma(pesos_positivos_maximos_de_evidencia_evaluable)
-
-  salida:
-    minimo: 0.0
-    maximo: 1.0
-
-  niveles:
-    muy_baja:
-      min_inclusivo: 0.00
-      max_exclusivo: 0.30
-      texto: "Evidencia insuficiente"
-    baja:
-      min_inclusivo: 0.30
-      max_exclusivo: 0.50
-      texto: "Hipótesis débil"
-    media:
-      min_inclusivo: 0.50
-      max_exclusivo: 0.70
-      texto: "Evidencia moderada"
-    alta:
-      min_inclusivo: 0.70
-      max_exclusivo: 0.85
-      texto: "Evidencia fuerte"
-    muy_alta:
-      min_inclusivo: 0.85
-      max_exclusivo: 1.01
-      texto: "Evidencia muy fuerte"
-
-  restricciones:
-    - condicion: "calidad_medicion == invalida"
-      confianza_maxima: 0.0
-    - condicion: "calidad_medicion == insuficiente"
-      confianza_maxima: 0.30
-    - condicion: "rpm_no_disponible"
-      afecta:
-        - "desbalanceo"
-        - "desalineacion_angular"
-        - "desalineacion_paralela"
-        - "holgura_mecanica_estructural"
-        - "holgura_mecanica_interna"
-      confianza_maxima: 0.50
-    - condicion: "geometria_rodamiento_no_disponible"
-      afecta:
-        - "rodamiento_pista_exterior"
-        - "rodamiento_pista_interior"
-        - "rodamiento_elemento_rodante"
-        - "rodamiento_jaula"
-      confianza_maxima: 0.40
-
-  reglas_salida:
-    numero_maximo_hipotesis: 3
-    incluir_hipotesis_desde_confianza: 0.30
-    marcar_diagnostico_principal_desde_confianza: 0.70
-    permitir_resultado_inconcluso: true
+# Movido a criterios_proyecto.yaml (confianza_diagnostico): ninguna norma fija el metodo ni sus numeros.
 
 # -----------------------------------------------------------------------------
 # 8. BASELINE, TENDENCIAS Y ALARMAS
@@ -938,11 +818,6 @@ gestion_condicion:
 
   tendencia:
     habilitado: true
-    ventanas_dias:
-      corta: 7
-      media: 30
-      larga: 90
-
     variables:
       - "rms_velocidad"
       - "rms_aceleracion"
@@ -1209,48 +1084,8 @@ resultado_normalizado:
 
 # -----------------------------------------------------------------------------
 # 14. PARÁMETROS CONFIGURABLES DEL MOTOR DE REGLAS
+#     Movidos a criterios_proyecto.yaml: ninguno proviene de una norma.
 # -----------------------------------------------------------------------------
-
-configuracion_motor_reglas:
-  tolerancias:
-    coincidencia_frecuencia_pct_default: 3.0
-    coincidencia_frecuencia_rodamientos_pct_default: 2.0
-    coincidencia_banda_lateral_pct_default: 3.0
-
-  deteccion_picos:
-    metodo_default: "prominencia"
-    prominencia_minima_relativa: 0.05
-    relacion_sobre_ruido_minima: 3.0
-
-  definicion_cualitativa:
-    muy_bajo:
-      max_ratio_baseline: 1.10
-    normal:
-      max_ratio_baseline: 1.25
-    elevado:
-      min_ratio_baseline: 1.25
-    muy_elevado:
-      min_ratio_baseline: 2.00
-
-  faltan_datos:
-    politica: "no_inferir"
-    registrar_feature_no_disponible: true
-
-  # direccion_radial_axial: umbrales para las evidencias "direccion_radial"
-  # y "vibracion_axial" de las reglas desbalanceo/desalineacion_angular/
-  # desalineacion_paralela (seccion 6). A diferencia del resto de este
-  # archivo, estos numeros NO provienen de una norma ISO especifica -
-  # ninguna de las 12 normas citadas (seccion 3) trae una cifra concreta
-  # para esta comparacion, y el archivo declara explicitamente
-  # texto_iso_incrustado: false (no se reproduce texto de normas pagadas).
-  # Son una regla de practica general de analisis de vibraciones
-  # (formacion de analistas categoria ISO 18436-2), PENDIENTE de
-  # validacion con el profesor guia o una fuente normativa citable -
-  # ver R-003 en PROYECTO.md. No tratar como cita ISO.
-  direccion_radial_axial:
-    fuente: "practica_general_no_iso_especifica_pendiente_validacion"
-    ratio_minimo_radial_sobre_axial_para_predominante: 1.5
-    ratio_minimo_axial_sobre_radial_para_muy_elevada: 1.0
 
 # -----------------------------------------------------------------------------
 # 15. TRAZABILIDAD

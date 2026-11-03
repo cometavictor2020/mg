@@ -1,0 +1,145 @@
+Validacion con MAFAULDA usando los dos acelerometros (ventana de 2 s, velocidad del tacometro, linea base del normal mas cercano, por sensor)
+
+Archivos evaluados: 880 (calibracion: 27, reserva: 853)
+Cada fila: % de archivos de esa condicion cuyo diagnostico principal (mayor confianza, >= 0,70) cae en cada resultado.
+Lo correcto es: normal -> ninguna; desbalanceo -> desbalanceo; desalineacion (horizontal o vertical) -> desalineacion.
+
+== solo_relacion | reserva | combinacion: sensor1
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            85%            13%             2%             0%
+desbalanceo                 322            15%            84%             1%             0%
+desalineacion_horizontal    192            92%             7%             1%             0%
+desalineacion_vertical      292            89%             9%             2%             0%
+
+== solo_relacion | reserva | combinacion: sensor2
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            81%            17%             2%             0%
+desbalanceo                 322             6%            51%            43%             0%
+desalineacion_horizontal    192            61%            23%            16%             0%
+desalineacion_vertical      292            52%             4%            44%             0%
+
+== solo_relacion | reserva | combinacion: promedio
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            89%            11%             0%             0%
+desbalanceo                 322            19%            80%             1%             0%
+desalineacion_horizontal    192            94%             5%             1%             0%
+desalineacion_vertical      292            86%             9%             5%             0%
+
+== solo_relacion | reserva | combinacion: maximo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            77%            19%             4%             0%
+desbalanceo                 322             1%            56%            14%            30%
+desalineacion_horizontal    192            59%            25%            16%             0%
+desalineacion_vertical      292            50%             4%            39%             6%
+
+== solo_relacion | reserva | combinacion: minimo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            89%            11%             0%             0%
+desbalanceo                 322            20%            80%             1%             0%
+desalineacion_horizontal    192            94%             5%             1%             0%
+desalineacion_vertical      292            90%             9%             1%             0%
+
+== solo_relacion | calibracion | combinacion: sensor1
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9            89%             0%            11%             0%
+
+== solo_relacion | calibracion | combinacion: sensor2
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5            80%            20%             0%             0%
+desalineacion_vertical        9           100%             0%             0%             0%
+
+== solo_relacion | calibracion | combinacion: promedio
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9            89%             0%            11%             0%
+
+== solo_relacion | calibracion | combinacion: maximo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5            80%            20%             0%             0%
+desalineacion_vertical        9            89%             0%            11%             0%
+
+== solo_relacion | calibracion | combinacion: minimo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9           100%             0%             0%             0%
+
+== relacion_y_ejes | reserva | combinacion: sensor1
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            87%             0%            13%             0%
+desbalanceo                 322            16%            23%            25%            36%
+desalineacion_horizontal    192            85%             2%            13%             0%
+desalineacion_vertical      292            77%             0%            23%             0%
+
+== relacion_y_ejes | reserva | combinacion: sensor2
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            72%             4%            23%             0%
+desbalanceo                 322             2%            33%            55%            11%
+desalineacion_horizontal    192            45%             9%            45%             0%
+desalineacion_vertical      292             8%             3%            89%             0%
+
+== relacion_y_ejes | reserva | combinacion: promedio
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            91%             0%             9%             0%
+desbalanceo                 322            25%            42%            24%             8%
+desalineacion_horizontal    192            92%             1%             7%             0%
+desalineacion_vertical      292            82%             0%            18%             0%
+
+== relacion_y_ejes | reserva | combinacion: maximo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            68%             4%            28%             0%
+desbalanceo                 322             1%             9%            27%            63%
+desalineacion_horizontal    192            42%             9%            49%             0%
+desalineacion_vertical      292             6%             2%            92%             0%
+
+== relacion_y_ejes | reserva | combinacion: minimo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                       47            91%             0%             9%             0%
+desbalanceo                 322            41%            36%            15%             8%
+desalineacion_horizontal    192            92%             1%             7%             0%
+desalineacion_vertical      292            88%             0%            12%             0%
+
+== relacion_y_ejes | calibracion | combinacion: sensor1
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%             0%             9%            91%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9            78%             0%            22%             0%
+
+== relacion_y_ejes | calibracion | combinacion: sensor2
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%           100%             0%             0%
+desalineacion_horizontal      5            40%            20%            40%             0%
+desalineacion_vertical        9             0%             0%           100%             0%
+
+== relacion_y_ejes | calibracion | combinacion: promedio
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             9%            91%             0%             0%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9            78%             0%            22%             0%
+
+== relacion_y_ejes | calibracion | combinacion: maximo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             0%             0%             0%           100%
+desalineacion_horizontal      5            40%            20%            40%             0%
+desalineacion_vertical        9             0%             0%           100%             0%
+
+== relacion_y_ejes | calibracion | combinacion: minimo
+condicion                     N        ninguna    desbalanceo  desalineacion         empate
+normal                        2           100%             0%             0%             0%
+desbalanceo                  11             9%            91%             0%             0%
+desalineacion_horizontal      5           100%             0%             0%             0%
+desalineacion_vertical        9            78%             0%            22%             0%

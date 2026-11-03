@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from basedatos.conexion import SesionLocal
 from basedatos.modelos import Equipo, Sensor, Medicion, Reporte
+from basedatos.utilidades import obtener_linea_base_activa
 from backend.procesamiento.lectura_csv import leer_ventana_segundos
 from backend.procesamiento.frecuencia import calcular_fft
 from backend.procesamiento.diagnostico import diagnosticar_sensor
@@ -190,6 +191,8 @@ def generar_reporte(datos: ReporteEntrada):
                 tipo_soporte=tipo_soporte,
                 unidad_señal=medicion.unidad,
                 orientacion_ejes=(sensor.configuracion or {}).get("orientacion_ejes"),
+                linea_base=obtener_linea_base_activa(sesion, sensor.id),
+                rpm_real=medicion.rpm_real,
             )
 
             # El grafico de rodamiento (si se calculo) trae arreglos

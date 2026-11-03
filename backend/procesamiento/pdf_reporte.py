@@ -25,6 +25,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from backend.procesamiento.ejes import ejes_en_datos_fft
+
 COLORES_EJE = {"x": "#14b8a6", "y": "#38bdf8", "z": "#a78bfa"}
 
 
@@ -48,12 +50,15 @@ def marcar_frecuencias(eje_grafico, frecuencias):
 
 
 def graficar_espectro(datos_fft, frecuencias_esperadas):
-    """Devuelve un PNG (bytes) del espectro FFT con 1x/2x/3x marcados."""
+    """Devuelve un PNG (bytes) del espectro FFT con 1x/2x/3x marcados (sin la componente continua, 0 Hz)."""
+    # El 0 Hz es el desplazamiento del sensor, no vibracion: puede ser decenas de veces mayor que el 1x
+    # y aplastar la escala. Solo se omite al graficar; el diagnostico usa el espectro completo.
+    datos_fft = [d for d in datos_fft if d["frecuencia"] > 0]
     frecuencias = [d["frecuencia"] for d in datos_fft]
 
     figura, eje_grafico = plt.subplots(figsize=(16, 7))
 
-    for eje in ("x", "y", "z"):
+    for eje in ejes_en_datos_fft(datos_fft):
         eje_grafico.plot(
             frecuencias,
             [d[f"amplitud_{eje}"] for d in datos_fft],
@@ -99,18 +104,23 @@ def graficar_envolvente(datos_grafico):
 
 
 def graficar_senal_envolvente(datos_grafico):
-    """Señal cruda en el tiempo con su curva de envolvente (Hilbert) superpuesta."""
+    """Señal filtrada en la banda de resonancia, con su curva de envolvente (Hilbert) superpuesta."""
     tiempo = datos_grafico["tiempo"]
     señal = datos_grafico["señal"]
     envolvente = datos_grafico["envolvente_tiempo"]
+    banda = datos_grafico.get("banda_demodulacion_hz")
 
     figura, eje_grafico = plt.subplots(figsize=(16, 6))
-    eje_grafico.plot(tiempo, señal, color="#cbd5e1", linewidth=0.6, label="Señal cruda")
-    eje_grafico.plot(tiempo, envolvente, color="#ef4444", linewidth=1.4, label="Envolvente (Hilbert)")
+    eje_grafico.plot(tiempo, señal, color="#94a3b8", linewidth=0.6, label="Señal filtrada en la banda de resonancia")
+    eje_grafico.plot(tiempo, envolvente, color="#ef4444", linewidth=1.6, label="Envolvente (Hilbert)")
 
     eje_grafico.set_xlabel("Tiempo [s]")
     eje_grafico.set_ylabel("Amplitud")
-    eje_grafico.set_title(f"Señal cruda y su envolvente — eje {datos_grafico['eje'].upper()}", fontsize=10)
+    texto_banda = f", banda {banda[0] / 1000:.1f}–{banda[1] / 1000:.1f} kHz" if banda else ""
+    eje_grafico.set_title(
+        f"Señal filtrada y su envolvente (primeros {tiempo[-1] * 1000:.0f} ms) — eje {datos_grafico['eje'].upper()}{texto_banda}",
+        fontsize=10,
+    )
     eje_grafico.legend(loc="upper right")
     eje_grafico.grid(alpha=0.3)
 
@@ -155,6 +165,7 @@ def generar_pdf_reporte(reporte, graficos_rodamiento=None):
         "H2Reporte", parent=estilos["Heading2"], spaceBefore=16, spaceAfter=6,
     )
     estilo_normal = estilos["Normal"]
+    estilo_celda = ParagraphStyle("CeldaTabla", parent=estilos["Normal"], fontSize=8.5, leading=10.5)
 
     elementos = []
 
@@ -191,6 +202,59 @@ def generar_pdf_reporte(reporte, graficos_rodamiento=None):
                 estilo_normal,
             ))
 
+        cambio = diagnostico.get("cambio_linea_base")
+        if cambio and cambio["aplicable"]:
+            niveles = {"sin_cambio": "sin cambio relevante", "elevado": "elevado", "muy_elevado": "muy elevado", "disminuyo": "disminuyó"}
+            elementos.append(Paragraph(
+                f"<b>Cambio respecto de la línea base:</b> {niveles.get(cambio['nivel'], cambio['nivel'])} — "
+                f"velocidad RMS {cambio['velocidad_rms_actual_mm_s']:.2f} mm/s frente a "
+                f"{cambio['velocidad_rms_referencia_mm_s']:.2f} mm/s de la referencia ({cambio['razon']:g} veces; "
+                f"banda {cambio['banda_hz'][0]:g}–{cambio['banda_hz'][1]:.0f} Hz, peor eje). "
+                "Por eje: "
+                + " · ".join(f"{eje.upper()} ×{v['razon'] if v['razon'] is not None else '—'}" for eje, v in cambio["por_eje"].items())
+                + ". Criterio relativo del proyecto, no una norma.",
+                estilo_normal,
+            ))
+        elif cambio:
+            elementos.append(Paragraph(
+                f"<b>Cambio respecto de la línea base:</b> no evaluable — {cambio['motivo_no_aplicable']}",
+                estilo_normal,
+            ))
+
+        velocidad = diagnostico.get("velocidad")
+        if velocidad:
+            origenes = {"medida": "declarada en la medición", "estimada": "estimada desde el espectro", "nominal": "nominal del equipo"}
+            texto_velocidad = (
+                f"<b>Velocidad de giro usada:</b> {velocidad['rpm']:.0f} r/min "
+                f"({origenes.get(velocidad['origen'], velocidad['origen'])}"
+                + (f", {velocidad['desviacion_pct']:+.1f}% respecto de la nominal" if velocidad["origen"] != "nominal" else "")
+                + ")"
+            )
+            verificacion = diagnostico.get("verificacion_velocidad")
+            if verificacion:
+                def _pico(pico):
+                    return f"{pico['frecuencia']:.1f} Hz (amplitud {pico['amplitud']:.3g})" if pico else "ninguno"
+
+                texto_velocidad += (
+                    f"<br/>1x esperado: {verificacion['frecuencia_1x_esperada']} Hz (±{verificacion['tolerancia_pct']:g}%) · "
+                    f"pico encontrado ahí: {_pico(verificacion['pico_1x'])} · "
+                    f"pico dominante del espectro: {_pico(verificacion['pico_dominante'])}"
+                )
+            elementos.append(Paragraph(texto_velocidad, estilo_normal))
+
+            if verificacion and verificacion["inconsistente"]:
+                elementos.append(Paragraph(
+                    "<b>Posible inconsistencia de velocidad:</b> hay un pico en "
+                    f"{_pico(verificacion['pico_externo'])}, fuera de la ventana donde se busca el 1x"
+                    + (
+                        f", {verificacion['razon_pico_externo']:g} veces el pico encontrado dentro de ella"
+                        if verificacion["razon_pico_externo"]
+                        else " (dentro de la ventana no se encontró ningún pico)"
+                    )
+                    + ". La velocidad usada puede no ser la real: declárala al cargar la medición.",
+                    estilo_normal,
+                ))
+
         calidad_medicion = diagnostico.get("calidad_medicion")
         if calidad_medicion and calidad_medicion["estado"] != "valida":
             mensajes = calidad_medicion["criticas"] + calidad_medicion["advertencias"]
@@ -223,7 +287,8 @@ def generar_pdf_reporte(reporte, graficos_rodamiento=None):
                 filas.append([
                     h["falla"].replace("_", " ").capitalize(),
                     f"{h['confianza'] * 100:.0f}%",
-                    ", ".join(h["evidencias"]),
+                    # Paragraph y no texto plano: la celda ajusta el texto largo en vez de salirse de la tabla.
+                    Paragraph(", ".join(h["evidencias"]), estilo_celda),
                 ])
 
             tabla = Table(filas, colWidths=[5 * cm, 2.5 * cm, 9.5 * cm])

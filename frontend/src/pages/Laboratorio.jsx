@@ -140,6 +140,11 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
   const [frecuenciaMuestreo, setFrecuenciaMuestreo] = useState("48000")
   const [variableSeñal, setVariableSeñal] = useState("")
   const [variableRpm, setVariableRpm] = useState("")
+  // D-060: archivos que declaran su propia frecuencia de muestreo y/o su
+  // velocidad en Hz (ej. los del MFPT: bearing.sr y bearing.rate).
+  const [variableFrecuencia, setVariableFrecuencia] = useState("")
+  const [unidadRpm, setUnidadRpm] = useState("rpm")
+  const [sugerencias, setSugerencias] = useState(null)
   const [rpm, setRpm] = useState("")
   const [numeroElementosRodantes, setNumeroElementosRodantes] = useState("9")
   const [diametroElementoMm, setDiametroElementoMm] = useState("7.94")
@@ -172,7 +177,26 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
     setErrorMetadata("")
     setVariableSeñal("")
     setVariableRpm("")
+    setVariableFrecuencia("")
+    setUnidadRpm("rpm")
+    setSugerencias(null)
   }
+
+  // Aplica lo que el sistema sugirio al leer la metadata. Nada se aplica
+  // solo: quien sube el archivo lo confirma con este boton y puede cambiarlo.
+  function aplicarSugerencias() {
+    if (!sugerencias) return
+    if (sugerencias.variable_señal) setVariableSeñal(sugerencias.variable_señal)
+    if (sugerencias.variable_frecuencia_muestreo) setVariableFrecuencia(sugerencias.variable_frecuencia_muestreo)
+    if (sugerencias.variable_rpm) {
+      setVariableRpm(sugerencias.variable_rpm)
+      setUnidadRpm(sugerencias.unidad_rpm ?? "rpm")
+    }
+  }
+
+  const hayAlgunaSugerencia =
+    sugerencias &&
+    (sugerencias.variable_señal || sugerencias.variable_frecuencia_muestreo || sugerencias.variable_rpm)
 
   // Lista de candidatas a optimizar, ordenada por prioridad (misma
   // confianza con la que el motor ya ordena las hipótesis) — derivada
@@ -203,7 +227,8 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
     try {
       const formulario = new FormData()
       formulario.append("archivo", archivo)
-      formulario.append("frecuencia_muestreo", frecuenciaMuestreo)
+      // La frecuencia que realmente uso el analisis (manual o la del archivo).
+      formulario.append("frecuencia_muestreo", resultado?.frecuencia_muestreo ?? frecuenciaMuestreo)
       formulario.append("frecuencia_objetivo", candidata.frecuencia)
       if (variableSeñal) formulario.append("variable_señal", variableSeñal)
       formulario.append("enjambre", "30")
@@ -272,7 +297,9 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
         throw new Error(detalle?.detail ?? "No fue posible leer la metadata del archivo")
       }
 
-      setMetadata((await respuesta.json()).variables)
+      const datos = await respuesta.json()
+      setMetadata(datos.variables)
+      setSugerencias(datos.sugerencias ?? null)
     } catch (err) {
       setErrorMetadata(err.message)
     } finally {
@@ -299,9 +326,16 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
 
     const formulario = new FormData()
     formulario.append("archivo", archivo)
-    formulario.append("frecuencia_muestreo", frecuenciaMuestreo)
+    if (variableFrecuencia) {
+      formulario.append("variable_frecuencia_muestreo", variableFrecuencia)
+    } else {
+      formulario.append("frecuencia_muestreo", frecuenciaMuestreo)
+    }
     if (variableSeñal) formulario.append("variable_señal", variableSeñal)
-    if (variableRpm) formulario.append("variable_rpm", variableRpm)
+    if (variableRpm) {
+      formulario.append("variable_rpm", variableRpm)
+      formulario.append("unidad_variable_rpm", unidadRpm)
+    }
     if (rpm) formulario.append("rpm", rpm)
     formulario.append("numero_elementos_rodantes", numeroElementosRodantes)
     formulario.append("diametro_elemento_mm", diametroElementoMm)
@@ -403,6 +437,37 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
                       eliges ninguna, se intenta autodetectar la convención de nombres de CWRU).
                     </p>
                     <TablaMetadata variables={metadata} />
+
+                    {hayAlgunaSugerencia && (
+                      <div className="reporte-limitaciones" style={{ marginTop: "10px" }}>
+                        <p className="config-mensaje">
+                          <strong>Sugerencia del sistema</strong> (no se aplica sola; confírmala o cámbiala abajo):
+                        </p>
+                        <ul>
+                          {sugerencias.variable_señal && (
+                            <li>Señal: <code>{sugerencias.variable_señal}</code></li>
+                          )}
+                          {sugerencias.variable_frecuencia_muestreo && (
+                            <li>
+                              Frecuencia de muestreo: <code>{sugerencias.variable_frecuencia_muestreo}</code> (
+                              {sugerencias.valores?.frecuencia_muestreo} Hz)
+                            </li>
+                          )}
+                          {sugerencias.variable_rpm && (
+                            <li>
+                              Velocidad de giro: <code>{sugerencias.variable_rpm}</code> ({sugerencias.valores?.velocidad}{" "}
+                              {sugerencias.unidad_rpm === "hz" ? "Hz" : "r/min"})
+                            </li>
+                          )}
+                          {(sugerencias.notas ?? []).map((nota) => (
+                            <li key={nota} className="config-nota">{nota}</li>
+                          ))}
+                        </ul>
+                        <button type="button" className="config-boton-secundario" onClick={aplicarSugerencias}>
+                          Usar esta sugerencia
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -427,15 +492,44 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
                 </select>
               </div>
 
+              {metadata && (
+                <>
+                  <div className="config-form-campo">
+                    <label>Variable de frecuencia de muestreo (opcional — si la eliges, se usa la del archivo)</label>
+                    <select value={variableFrecuencia} onChange={(e) => setVariableFrecuencia(e.target.value)}>
+                      <option value="">No: indicar el valor manualmente</option>
+                      {metadata
+                        .filter((variable) => variable.cantidad_elementos === 1 && variable.vista_previa)
+                        .map((variable) => (
+                          <option key={variable.nombre} value={variable.nombre}>
+                            {variable.nombre} ({variable.vista_previa[0]})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {variableRpm && (
+                    <div className="config-form-campo">
+                      <label>Unidad de la variable de velocidad</label>
+                      <select value={unidadRpm} onChange={(e) => setUnidadRpm(e.target.value)}>
+                        <option value="rpm">r/min (RPM)</option>
+                        <option value="hz">Hz (revoluciones por segundo)</option>
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
+
               <div className="config-form-campo">
-                <label>Frecuencia de muestreo (Hz)</label>
+                <label>Frecuencia de muestreo (Hz){variableFrecuencia ? " — tomada del archivo" : ""}</label>
                 <input
                   type="number"
                   step="1"
                   min="1"
                   value={frecuenciaMuestreo}
                   onChange={(e) => setFrecuenciaMuestreo(e.target.value)}
-                  required
+                  disabled={Boolean(variableFrecuencia)}
+                  required={!variableFrecuencia}
                 />
               </div>
 
@@ -453,6 +547,12 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
                 <summary>Geometría del rodamiento (valores de ejemplo — edítalos según el rodamiento de tu archivo)</summary>
 
                 <div className="config-form" style={{ marginTop: "10px" }}>
+                  <p className="config-nota config-form-campo-ancho">
+                    Las frecuencias de falla solo dependen de la proporción entre el diámetro del elemento y el de
+                    paso: si tu rodamiento viene en otra unidad (por ejemplo pulgadas), ingresa ambos en esa misma
+                    unidad.
+                  </p>
+
                   <div className="config-form-campo">
                     <label>Número de elementos rodantes</label>
                     <input
@@ -512,7 +612,11 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
               <h3>Resultado</h3>
               <p className="config-mensaje">
                 Variable leída: <code>{resultado.variable_señal}</code> · RPM: {resultado.rpm} ·
-                Frecuencia de muestreo: {resultado.frecuencia_muestreo} Hz · Muestras: {resultado.cantidad_muestras}
+                Frecuencia de muestreo: {resultado.frecuencia_muestreo} Hz
+                {resultado.origen_frecuencia_muestreo && resultado.origen_frecuencia_muestreo !== "manual" && (
+                  <> (del archivo: <code>{resultado.origen_frecuencia_muestreo}</code>)</>
+                )}{" "}
+                · Muestras: {resultado.cantidad_muestras}
               </p>
 
               {resultado.hipotesis.length === 0 && (

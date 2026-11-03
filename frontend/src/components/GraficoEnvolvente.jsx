@@ -76,7 +76,11 @@ function GraficoEnvolvente({ grafico }) {
       </div>
 
       <details className="reporte-limitaciones">
-        <summary>Ver también señal cruda + envolvente</summary>
+        <summary>
+          Ver también señal filtrada + envolvente
+          {grafico.banda_demodulacion_hz &&
+            ` (banda ${(grafico.banda_demodulacion_hz[0] / 1000).toFixed(1)}–${(grafico.banda_demodulacion_hz[1] / 1000).toFixed(1)} kHz, primeros ${Math.round((grafico.señal_tiempo?.at(-1)?.t ?? 0) * 1000)} ms)`}
+        </summary>
 
         <div style={{ width: "100%", height: "260px", marginTop: "10px" }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -93,8 +97,8 @@ function GraficoEnvolvente({ grafico }) {
               <Line
                 type="monotone"
                 dataKey="senal"
-                name="Señal cruda"
-                stroke="#cbd5e1"
+                name="Señal filtrada"
+                stroke="#94a3b8"
                 dot={false}
                 strokeWidth={1}
                 isAnimationActive={false}

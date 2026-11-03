@@ -116,9 +116,36 @@
   background: var(--color-critico);
 }
 
+.reporte-cambio-nivel {
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.reporte-cambio-nivel-sin_cambio,
+.reporte-cambio-nivel-disminuyo {
+  background: var(--color-exito);
+}
+
+.reporte-cambio-nivel-elevado {
+  background: var(--color-advertencia);
+}
+
+.reporte-cambio-nivel-muy_elevado {
+  background: var(--color-critico);
+}
+
 .reporte-severidad-iso-no-aplicable {
   color: var(--color-texto-secundario);
   font-style: italic;
+}
+
+.reporte-velocidad {
+  margin: 0 0 10px;
+  color: var(--color-texto-secundario);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .reporte-calidad-medicion {
