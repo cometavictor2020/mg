@@ -9,6 +9,8 @@ __pycache__/
 # Variables de entorno (credenciales de base de datos, etc.)
 .env
 .env.*
+# Excepcion: el archivo de ejemplo (solo valores de relleno, sin credenciales) si se sube
+!.env.example
 
 # Editor
 .vscode/

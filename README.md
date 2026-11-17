@@ -89,7 +89,7 @@ La base de datos **no guarda las muestras** de las señales: guarda metadatos y 
    GRANT ALL PRIVILEGES ON motorguardian.* TO 'motorguardian_app'@'localhost';
    ```
 
-4. **Variables de entorno.** Crea un archivo `.env` en la raíz del proyecto (está excluido de Git; **nunca lo subas**):
+4. **Variables de entorno.** Copia `.env.example` como `.env` en la raíz del proyecto y reemplaza los valores (el `.env` está excluido de Git; **nunca lo subas**):
 
    | Variable | Obligatoria | Uso |
    |---|---|---|
@@ -101,11 +101,23 @@ La base de datos **no guarda las muestras** de las señales: guarda metadatos y 
 
    Un canal de aviso o la IA sin sus credenciales simplemente se omiten. La configuración no secreta está en `config/` (por ejemplo `notificaciones.yaml` e `ia.yaml`, donde se elige el modelo de OpenAI).
 
-5. **Crear las tablas y cargar el catálogo de sensores**
+5. **Crear las tablas y cargar el catálogo de sensores.** El esquema de la base de datos no está en un archivo SQL: se define en `basedatos/modelos.py` (tablas, relaciones y claves) y el primer script lo crea completo en la base vacía del paso 3. Es seguro repetirlo; solo crea lo que falta. El diagrama entidad-relación está en `docs/der_basedatos.png`.
 
    ```powershell
    python herramientas\crear_tablas_basedatos.py
    python herramientas\sembrar_catalogo_sensores.py
+   ```
+
+   *Opcional, datos de ejemplo:* para tener equipos con los que probar la interfaz, carga los de demostración (no incluyen mediciones):
+
+   ```powershell
+   python herramientas\sembrar_equipos_demo.py
+   ```
+
+   Para tener una señal que analizar, genera un CSV sintético con falla de rodamiento (se guarda en `datos/`) y cárgalo con el botón «Cargar medición» del Analizador de vibraciones, sobre un equipo con su sensor y rodamiento ya definidos en Configuración:
+
+   ```powershell
+   python herramientas\generar_csv_falla_rodamiento_envolvente.py
    ```
 
 6. **Crear el usuario de prueba** (`admin@motorguardian.io`, clave `mg2024`). Es solo para evaluar el sistema en tu equipo: **cambia o elimina esa cuenta antes de exponer la aplicación en una red**.
