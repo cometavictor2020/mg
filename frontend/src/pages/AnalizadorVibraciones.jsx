@@ -353,7 +353,7 @@ function AnalizadorVibraciones({
         setDatosEstadisticos(respuestaEstadisticos)
 
         setMensajeEstadisticos(
-          `Estadísticos calculados sobre las mismas muestras cargadas${etiquetaSensor}`
+          `Estadísticos calculados sobre ${respuestaEstadisticos.cantidad_muestras} muestras (${respuestaEstadisticos.duracion_segundos} s), la misma ventana de la FFT${etiquetaSensor}`
         )
       })
       .catch((error) => {

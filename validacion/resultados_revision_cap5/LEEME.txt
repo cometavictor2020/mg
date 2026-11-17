@@ -1,0 +1,32 @@
+Revision del capitulo 5 con el codigo vigente (2026-11-04)
+==========================================================
+Motor: conocimiento/criterios_proyecto.yaml v1.0.0 con el criterio de ruido local ACTIVO
+(deteccion_picos.relacion_sobre_ruido_local_minima = 8.0), normativa_motorguardian.yaml v1.1.0.
+Nada de lo anterior se borro ni se sobrescribio: los resultados previos siguen en las demas carpetas de
+validacion/ y en herramientas/local_sin_git/salida_sintetica/.
+
+Cada subcarpeta y el comando (desde mg\, con el venv activo, python -X utf8) que la genero:
+
+motor/                validar_motor.py --salida validacion\resultados_revision_cap5\motor
+                      (MFPT, velocidad con nominal equivocada, Ottawa con y sin linea base, CWRU 135.mat)
+mafaulda/             validar_mafaulda.py --salida validacion\resultados_revision_cap5\mafaulda
+                      (579 archivos: normal, desbalanceo, desalineacion horizontal; escenarios antes / solo_relacion / relacion_y_ejes)
+vertical/             validar_mafaulda.py --carpetas normal/normal vertical-misalignment/vertical-misalignment --salida ...\vertical
+sro/                  validar_sro.py --datos "<carpeta SRO-Cross-Speed-Dataset>" --velocidades 900 --salida ...\sro
+paper/                reproducir_figuras_paper.py --salida ...\paper        (949 veces en 135.mat; casos CWRU)
+sinteticos_22kw/      local_sin_git\generar_sintetico_desalineacion_vacio_y_carga.py --salida ...   (semilla por defecto 20261029)
+sinteticos_rodamientos/ probar_rodamientos_sinteticos.py --salida ...\sint_rodamientos.txt
+linea_base_varios/    local_sin_git\calibrar_linea_base_varios_registros.py --sro "<carpeta SRO>" --procesos 8 --salida ...
+pso_y_tiempos.txt     scripts\verif_55_pso_y_tiempos.py   (PSO 30x30 x3, malla de 220 bandas, tiempos). Los tiempos por banda de
+                      la primera linea salieron con la maquina cargada por otras corridas (mediana 491 ms, minimo 99 ms).
+scripts\verif_53_espectro_y_banda_iso.py   (perdida de amplitud de la FFT; velocidad RMS de todo el espectro frente a la banda 10-1000 Hz)
+
+Como reproducir los resultados ANTERIORES de los sinteticos de 22 kW (los de herramientas\local_sin_git\salida_sintetica\resumen.txt):
+el cambio entre aquella corrida y esta se debe al criterio de ruido local (k = 8) incorporado despues. Poniendo
+deteccion_picos.relacion_sobre_ruido_local_minima en None (en memoria, sin editar el YAML) el generador reproduce el
+resumen anterior sin diferencias (comprobado el 2026-11-04).
+
+pantallazos/          Imagenes de fragmentos de la salida REAL de los scripts (no son capturas de la terminal: son los archivos de
+                      resultados dibujados tal cual, con el comando y el archivo de origen en el encabezado). Se regeneran con
+                      scripts\generar_pantallazos.py, que solo lee los resultados guardados en esta carpeta (y, para la comparacion
+                      con la corrida anterior de 22 kW, herramientas\local_sin_git\salida_sintetica\resumen.txt).

@@ -24,6 +24,7 @@ from backend.procesamiento.frecuencia import calcular_fft
 from backend.procesamiento.diagnostico import diagnosticar_sensor
 from backend.procesamiento.diagnostico_rodamientos import serializar_datos_grafico
 from backend.procesamiento.pdf_reporte import generar_pdf_reporte
+from backend.procesamiento.redaccion_ia import ErrorIA, estado_ia, redactar_resumen
 from seguridad.auth import obtener_usuario_actual
 
 router = APIRouter(
@@ -47,6 +48,8 @@ DURACION_VENTANA_SEGUNDOS = 2.0
 
 class ReporteEntrada(BaseModel):
     equipo_id: int
+    # True: se agrega al reporte UNA pagina "Resumen redactado por IA" (redaccion_ia.py). Apagado por defecto.
+    con_ia: bool = False
 
 
 class EliminarLoteEntrada(BaseModel):
@@ -85,6 +88,12 @@ def listar_reportes():
         return [serializar(r) for r in reportes]
     finally:
         sesion.close()
+
+
+@router.get("/ia/estado")
+def estado_redaccion_ia():
+    """Si el interruptor "Redactar con IA" se puede usar ahora (clave, modelo, paquete) y, si no, por que."""
+    return estado_ia()
 
 
 @router.get("/{reporte_id}")
@@ -224,6 +233,15 @@ def generar_reporte(datos: ReporteEntrada):
             "sensores": resultado_sensores,
         }
 
+        # Redaccion con IA (opcional): un solo reporte, el de siempre mas una pagina "Resumen redactado por IA". Si la
+        # IA falla o su texto no pasa la comprobacion de cifras, el reporte sale igual, sin esa pagina, y se avisa.
+        aviso_ia = None
+        if datos.con_ia:
+            try:
+                reporte_payload["resumen_ia"] = redactar_resumen(reporte_payload)
+            except ErrorIA as error:
+                aviso_ia = str(error)
+
         pdf_bytes = generar_pdf_reporte(reporte_payload, graficos_rodamiento_crudos)
 
         RUTA_REPORTES.mkdir(exist_ok=True)
@@ -250,14 +268,20 @@ def generar_reporte(datos: ReporteEntrada):
             sensor_resultado.pop("datos_fft", None)
             sensor_resultado.get("diagnostico", {}).pop("grafico_rodamiento", None)
 
+        resultado_guardado = {
+            "equipo": reporte_payload["equipo"],
+            "fecha_generacion": reporte_payload["fecha_generacion"],
+            "sensores": resultado_sensores,
+        }
+        if reporte_payload.get("resumen_ia"):
+            resultado_guardado["resumen_ia"] = reporte_payload["resumen_ia"]
+        if aviso_ia:
+            resultado_guardado["aviso_ia"] = aviso_ia
+
         reporte = Reporte(
             equipo_id=equipo.id,
             fecha_generacion=fecha_generacion,
-            resultado={
-                "equipo": reporte_payload["equipo"],
-                "fecha_generacion": reporte_payload["fecha_generacion"],
-                "sensores": resultado_sensores,
-            },
+            resultado=resultado_guardado,
             ruta_pdf=str(ruta_pdf),
         )
         sesion.add(reporte)

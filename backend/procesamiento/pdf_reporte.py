@@ -16,8 +16,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     Image,
+    KeepInFrame,
     ListFlowable,
     ListItem,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -131,11 +133,58 @@ def graficar_senal_envolvente(datos_grafico):
     return buffer
 
 
+def pagina_resumen_ia(resumen_ia, equipo, fecha_generacion, estilos):
+    """
+    Pagina adicional "Resumen redactado por IA" (redaccion_ia.py). Va al final del reporte, que no cambia. Todo el
+    contenido se encoge para caber en UNA sola pagina, sea cual sea el largo del texto.
+    """
+    estilo_titulo = ParagraphStyle("TituloIA", parent=estilos["Title"], fontSize=18, spaceAfter=4)
+    estilo_subtitulo = ParagraphStyle("SubtituloIA", parent=estilos["Normal"], fontSize=10, textColor=colors.grey)
+    estilo_h2 = ParagraphStyle("H2IA", parent=estilos["Heading2"], spaceBefore=14, spaceAfter=6)
+    estilo_aviso = ParagraphStyle(
+        "AvisoIA", parent=estilos["Normal"], fontSize=8.5, leading=11, textColor=colors.HexColor("#475569"),
+        borderColor=colors.HexColor("#cbd5e1"), borderWidth=0.6, borderPadding=6, backColor=colors.HexColor("#f1f5f9"),
+    )
+    estilo_texto = ParagraphStyle("TextoIA", parent=estilos["Normal"], fontSize=10.5, leading=14.5)
+
+    contenido = [
+        Paragraph("Resumen redactado por IA", estilo_titulo),
+        Paragraph(f"Equipo: {equipo['nombre']} · Reporte generado: {fecha_generacion}", estilo_subtitulo),
+        Spacer(1, 0.5 * cm),
+        Paragraph(
+            f"Texto redactado con inteligencia artificial (modelo {resumen_ia['modelo']}, {resumen_ia['fecha']}). "
+            "Se basa solo en los resultados de este reporte: no modifica el diagnóstico, las confianzas ni las cifras, y "
+            "debe ser revisado por el analista. La confianza es el puntaje de la evidencia encontrada por las reglas, no "
+            "la probabilidad de que el equipo falle.",
+            estilo_aviso,
+        ),
+        Paragraph("Resumen", estilo_h2),
+    ]
+    for parrafo in [p.strip() for p in resumen_ia["resumen"].split("\n") if p.strip()]:
+        contenido.append(Paragraph(parrafo, estilo_texto))
+        contenido.append(Spacer(1, 0.2 * cm))
+
+    if resumen_ia["observaciones"]:
+        contenido.append(Paragraph("Observaciones de la IA", estilo_h2))
+        contenido.append(ListFlowable(
+            [ListItem(Paragraph(o, estilo_texto)) for o in resumen_ia["observaciones"]],
+            bulletType="bullet",
+        ))
+    else:
+        contenido.append(Paragraph("Observaciones de la IA", estilo_h2))
+        contenido.append(Paragraph("La IA no encontró aspectos que advertir.", estilo_texto))
+
+    ancho, alto = A4
+    return [KeepInFrame(ancho - 3 * cm, alto - 3.4 * cm, contenido, mode="shrink")]
+
+
 def generar_pdf_reporte(reporte, graficos_rodamiento=None):
     """
     reporte: {
         "equipo": {"nombre", "tipo", "planta", "rpm_nominal"},
         "fecha_generacion": str,
+        "resumen_ia": dict opcional de redaccion_ia.redactar_resumen: agrega al final UNA pagina "Resumen redactado
+            por IA" (el resto del reporte no cambia),
         "sensores": [
             {
                 "sensor_id", "nombre_tipo", "tiene_medicion": bool,
@@ -323,6 +372,10 @@ def generar_pdf_reporte(reporte, graficos_rodamiento=None):
             bulletType="bullet",
         ))
         elementos.append(Spacer(1, 0.4 * cm))
+
+    if reporte.get("resumen_ia"):
+        elementos.append(PageBreak())
+        elementos.extend(pagina_resumen_ia(reporte["resumen_ia"], equipo, reporte["fecha_generacion"], estilos))
 
     buffer_pdf = io.BytesIO()
     documento = SimpleDocTemplate(

@@ -1,0 +1,8 @@
+archivo,caso_paper,etiqueta,esperada,diagnostico_completa,ventana_0,ventana_1
+135.mat,1.0,pista exterior 7 mils,pista_exterior,pista_exterior 1.00,pista_exterior 1.00,pista_exterior 1.00
+109.mat,13.0,pista interior 7 mils,pista_interior,pista_interior 1.00,pista_interior 1.00,pista_interior 1.00
+122.mat,25.0,elemento rodante 7 mils,elemento_rodante,(ninguna),(ninguna),(ninguna)
+238.mat,9.0,pista exterior 21 mils,pista_exterior,pista_exterior 1.00,pista_exterior 1.00,pista_exterior 1.00
+213.mat,21.0,pista interior 21 mils,pista_interior,pista_interior 1.00,pista_interior 1.00,pista_interior 1.00
+226.mat,33.0,elemento rodante 21 mils,elemento_rodante,(ninguna),(ninguna),(ninguna)
+97.mat,,sano (0 hp),sano,(ninguna),(ninguna),(ninguna)

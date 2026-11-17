@@ -23,6 +23,10 @@ from backend.api.administracion import usuarios, equipos, sensores, modelos_ml, 
 # La API no arranca si no puede leer los dos archivos de conocimiento (normativa y criterios del proyecto).
 cargar_normativa()
 
+# Duracion de la ventana que leen los estadisticos (curtosis, factor de cresta y skewness): la misma que usan la FFT,
+# los reportes y las alertas (reportes.py::DURACION_VENTANA_SEGUNDOS), para que describan la misma señal.
+DURACION_VENTANA_SEGUNDOS = 2.0
+
 app = FastAPI()
 
 app.add_middleware(
@@ -31,6 +35,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # El reporte de Laboratorio avisa por estos encabezados si la IA no pudo redactar (ver /api/laboratorio/reporte-mat).
+    expose_headers=["X-Aviso-IA", "X-Con-IA", "Content-Disposition"],
 )
 
 app.include_router(usuarios.router)
@@ -235,12 +241,16 @@ def obtener_estadisticos(
                 detail="Este equipo no tiene mediciones registradas",
             )
 
-        datos = leer_muestra_csv(
+        datos = leer_ventana_segundos(
             medicion.ruta_archivo_local,
-            cantidad_filas=1000,
+            medicion.frecuencia_muestreo,
+            duracion_segundos=DURACION_VENTANA_SEGUNDOS,
         )
 
-        return calcular_estadisticos(datos)
+        resultado = calcular_estadisticos(datos)
+        resultado["cantidad_muestras"] = len(datos)
+        resultado["duracion_segundos"] = round(len(datos) / medicion.frecuencia_muestreo, 6)
+        return resultado
     finally:
         sesion.close()
 

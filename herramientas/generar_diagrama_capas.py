@@ -31,6 +31,9 @@ CAPAS = {
 }
 COLOR_RAZON = "#be123c"
 
+# Factor que se aplica a todos los textos del diagrama (menos los numeros de las razones y el bloque de la nube).
+ESCALA_FUENTE = 1.1
+
 
 def caja(ax, x, y, ancho, alto, fondo, borde, radio=0.9, grosor=1.6, estilo="-", zorder=2):
     ax.add_patch(
@@ -93,7 +96,7 @@ def dibujar():
     # ---- Capa 1: interfaz --------------------------------------------------------------------------------------
     c = CAPAS["interfaz"]
     caja(ax, X, 62.5, ANCHO, 13, c["fondo"], c["borde"])
-    titulo_capa(ax, X + 1.5, 73.6, "1", "Interfaz web", "Lo que ve y usa el responsable de mantenimiento (React + Vite)", c["borde"])
+    titulo_capa(ax, X + 1.5, 73.6, "1", "Presentación", "Visualización, formularios de carga y administración, gráficos", c["borde"])
     fila_de_chips(
         ax, X + 1.5, 64.2, ANCHO - 3, 5.2,
         ["Acceso", "Resumen\ngeneral", "Analizador de\nvibraciones", "Reportes", "Laboratorio", "Configuración", "Otro cliente\n(a futuro)"],
@@ -103,13 +106,13 @@ def dibujar():
     # ---- Capa 2: servicios -------------------------------------------------------------------------------------
     c = CAPAS["servicios"]
     caja(ax, X, 43.5, ANCHO, 13, c["fondo"], c["borde"])
-    titulo_capa(ax, X + 1.5, 54.6, "2", "Servicios (API)", "Recibe las solicitudes, comprueba el acceso y responde; no calcula (FastAPI)", c["borde"])
+    titulo_capa(ax, X + 1.5, 54.6, "2", "API", "Recepción de solicitudes, validación de entrada, autorización y orquestación; no calcula", c["borde"])
     fila_de_chips(ax, X + 1.5, 45.2, ANCHO - 3, 5.2, ["Acceso y\nusuarios", "Equipos y\nsensores", "Carga de\nmediciones", "Diagnóstico\ny alertas", "Reportes\nen PDF", "Líneas base"], c["borde"])
 
     # ---- Capa 3: procesamiento y diagnóstico -------------------------------------------------------------------
     c = CAPAS["procesamiento"]
     caja(ax, X, 21.5, ANCHO, 18.5, c["fondo"], c["borde"])
-    titulo_capa(ax, X + 1.5, 37.6, "3", "Procesamiento y diagnóstico", "Cálculo sobre la señal (Python); no conoce la interfaz ni el protocolo HTTP", c["borde"])
+    titulo_capa(ax, X + 1.5, 37.6, "3", "Procesamiento", "Cálculo sobre la señal; no conoce la interfaz ni el protocolo HTTP", c["borde"])
     ancho_chip = (ANCHO - 3 - 0.8 * 3) / 4
     modulos = [
         ["Lectura de\nseñales", "Espectro\n(FFT)", "Espectro de\nenvolvente", "Velocidad\nde giro"],
@@ -123,40 +126,55 @@ def dibujar():
     # ---- Capa 4: datos -----------------------------------------------------------------------------------------
     c = CAPAS["datos"]
     caja(ax, X, 3.5, ANCHO, 14, c["fondo"], c["borde"])
-    titulo_capa(ax, X + 1.5, 15.1, "4", "Datos", "Qué se guarda y dónde", c["borde"])
+    titulo_capa(ax, X + 1.5, 15.1, "4", "Persistencia", "Metadatos y resultados en base relacional; señales crudas y PDF en archivos", c["borde"])
     chip(ax, X + 1.5, 5.0, 30.5, 7.4, "Base de datos MySQL\nEquipos, sensores, rodamientos, mediciones,\nreportes, líneas base, avisos y usuarios", c["borde"], tam=8.6)
-    chip(ax, X + 33.0, 5.0, 17.0, 7.4, "Archivos de señales\n(disco local)\nLas muestras no van\na la base de datos", c["borde"], tam=8.4)
-    chip(ax, X + 51.0, 5.0, 16.5, 7.4, "Respaldo en la nube\n(AWS S3)\nSubida manual", c["borde"], tam=8.6, estilo="--")
+    chip(ax, X + 33.0, 5.0, 35.5, 7.4, "Archivos en disco\nseñales crudas (datos/) y PDF (reportes/)\nlas muestras no van a la base de datos", c["borde"], tam=8.6)
 
     # ---- Columna lateral: avisos (junto a los servicios) --------------------------------------------------------
     c = CAPAS["lateral"]
     caja(ax, XL, 43.5, ANCHO_L, 13, c["fondo"], c["borde"])
-    ax.text(XL + 1.2, 54.6, "Avisos", ha="left", va="center", fontsize=11.3, fontweight="bold", color=c["borde"], zorder=4)
+    ax.text(XL + 1.2, 54.6, "Notificaciones", ha="left", va="center", fontsize=11.3, fontweight="bold", color=c["borde"], zorder=4)
     ax.text(XL + 1.2, 53.0, "Al cargar una medición", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, style="italic", zorder=4)
     chip(ax, XL + 1.2, 49.0, ANCHO_L - 2.4, 2.8, "Correo electrónico", c["borde"], tam=8.8)
     chip(ax, XL + 1.2, 45.2, ANCHO_L - 2.4, 2.8, "Telegram", c["borde"], tam=8.8)
 
     # ---- Columna lateral: base de conocimiento (junto al procesamiento) -----------------------------------------
     caja(ax, XL, 19.5, ANCHO_L, 22.0, c["fondo"], c["borde"])
-    ax.text(XL + 1.2, 39.6, "Base de conocimiento", ha="left", va="center", fontsize=11.3, fontweight="bold", color=c["borde"], zorder=4)
-    ax.text(XL + 1.2, 37.0, "Archivos de texto (YAML)\ncurados por el desarrollador", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, style="italic", zorder=4, linespacing=1.2)
+    ax.text(XL + 1.2, 39.6, "Conocimiento", ha="left", va="center", fontsize=11.3, fontweight="bold", color=c["borde"], zorder=4)
+    ax.text(XL + 1.2, 37.0, "Archivos de texto,\nseparados del código", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, style="italic", zorder=4, linespacing=1.2)
     for i, texto in enumerate(["Normativa y reglas\nde diagnóstico", "Criterios del\nproyecto", "Catálogo de\ntipos de sensor"]):
         chip(ax, XL + 1.2, 31.6 - i * 4.6, ANCHO_L - 2.4, 3.8, texto, c["borde"], tam=8.6)
     ax.text(XL + 1.2, 20.9, "Las reglas no están fijas\nen el código", ha="left", va="center", fontsize=8.4, color=TEXTO_TENUE, zorder=4, linespacing=1.2)
 
     # ---- Leyenda de trazos (columna lateral, a la altura de la interfaz) ----------------------------------------
-    ax.text(XL + 0.5, 72.0, "Trazo continuo:\nparte del sistema.", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, zorder=4, linespacing=1.25)
-    ax.text(XL + 0.5, 67.0, "Trazo discontinuo:\nfunción manual o\nposible a futuro.", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, zorder=4, linespacing=1.25)
+    ax.text(XL + ANCHO_L + 1, 77.2, "Trazo discontinuo: función manual o a futuro", ha="right", va="center", fontsize=8.4, color=TEXTO_TENUE, zorder=4)
+
+    # ---- Columna lateral: seguridad (junto a la interfaz y la API) ----------------------------------------------
+    caja(ax, XL, 62.5, ANCHO_L, 13, c["fondo"], c["borde"])
+    ax.text(XL + 1.2, 73.6, "Seguridad", ha="left", va="center", fontsize=11.3, fontweight="bold", color=c["borde"], zorder=4)
+    ax.text(XL + 1.2, 72.0, "Acceso al sistema", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, style="italic", zorder=4)
+    chip(ax, XL + 1.2, 68.2, ANCHO_L - 2.4, 2.8, "Contraseñas con hash", c["borde"], tam=8.2)
+    chip(ax, XL + 1.2, 64.4, ANCHO_L - 2.4, 2.8, "Tokens de sesión", c["borde"], tam=8.2)
+
+    # ---- Columna lateral: almacenamiento en la nube (junto a la persistencia) -----------------------------------
+    caja(ax, XL, 3.5, ANCHO_L, 14.0, c["fondo"], c["borde"], estilo="--")
+    ax.text(XL + 1.2, 15.2, "Almacenamiento en la nube", ha="left", va="center", fontsize=9.6, fontweight="bold", color=c["borde"], zorder=4)
+    ax.text(XL + 1.2, 13.2, "AWS S3", ha="left", va="center", fontsize=8.6, color=TEXTO_TENUE, style="italic", zorder=4)
+    chip(ax, XL + 1.2, 8.6, ANCHO_L - 2.4, 3.2, "Respaldo manual de archivos", c["borde"], tam=8.4)
+    ax.text(XL + 1.2, 6.0, "No lo invoca la API", ha="left", va="center", fontsize=8.4, color=TEXTO_TENUE, zorder=4)
 
     # ---- Flechas entre capas -----------------------------------------------------------------------------------
     flecha(ax, X + 25, 62.5, X + 25, 56.5)
-    etiqueta(ax, X + 26.2, 59.5, "solicitudes y respuestas (JSON sobre HTTP): la misma API sirve a cualquier cliente")
+    etiqueta(ax, X + 26.2, 59.5, "solicitudes y respuestas;\nla misma API sirve a cualquier cliente")
     flecha(ax, X + 25, 43.5, X + 25, 40.0)
     etiqueta(ax, X + 26.2, 41.8, "llamadas a funciones de cálculo")
     flecha(ax, X + 58, 21.5, X + 58, 17.5)
     etiqueta(ax, X + 59.2, 19.5, "lectura y escritura")
     flecha(ax, X + ANCHO, 31.0, XL, 31.0, doble=False)
-    flecha(ax, X + ANCHO, 50.0, XL, 50.0, doble=False, estilo="--")
+    flecha(ax, X + ANCHO, 50.0, XL, 50.0, doble=False)
+    flecha(ax, XL, 66.0, X + ANCHO, 55.0, doble=False)
+    etiqueta(ax, XL + 1.2, 59.6, "valida cada solicitud")
+    flecha(ax, X + ANCHO, 10.5, XL, 10.5, doble=False, estilo="--")
 
     # ---- Nota sobre los catálogos abiertos ---------------------------------------------------------------------
     ax.text(X + 4.2, 19.0, "Los tipos de equipo y de sensor son tablas abiertas: agregar uno nuevo es agregar una fila", ha="left", va="center", fontsize=8.8, color=TEXTO_TENUE, style="italic", zorder=5)
@@ -177,6 +195,14 @@ def dibujar():
     for (numero, texto), x in zip(razones, xs):
         razon(ax, x, 1.55, numero)
         ax.text(x + 2.0, 1.55, texto, ha="left", va="center", fontsize=9.6, color=TEXTO, zorder=5)
+
+    # Letras un poco mas grandes para leerlas mejor, sin que salgan de sus recuadros. El titulo del bloque de la nube
+    # ya ocupa casi todo el ancho de su caja y se deja en su tamaño.
+    for texto in ax.texts:
+        if texto.get_text() == "Almacenamiento en la nube":
+            texto.set_fontsize(9.8)
+        elif texto.get_text() not in ("1", "2", "3") and not texto.get_text().startswith("MotorGuardian:"):
+            texto.set_fontsize(texto.get_fontsize() * ESCALA_FUENTE)
 
     return fig
 

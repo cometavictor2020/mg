@@ -17,20 +17,27 @@ en memoria y se descarta al responder (mismo criterio efimero que
 datos_fft/grafico de envolvente, D-042).
 """
 
+import re
+from datetime import datetime
 from typing import Optional
 from types import SimpleNamespace
+from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 
-from backend.procesamiento.diagnostico import cargar_normativa
+from backend.procesamiento.diagnostico import cargar_normativa, diagnosticar_sensor
 from backend.procesamiento.diagnostico_rodamientos import (
     calcular_datos_grafico,
     evaluar_rodamiento,
     serializar_datos_grafico,
 )
+from backend.procesamiento.frecuencia import calcular_fft
 from backend.procesamiento.lectura_mat import extraer_variable, inspeccionar_mat, leer_señal_cwru, sugerir_lectura
+from backend.procesamiento.pdf_reporte import generar_pdf_reporte
+from backend.procesamiento.redaccion_ia import ErrorIA, redactar_resumen
 from seguridad.auth import obtener_usuario_actual
 
 router = APIRouter(
@@ -52,6 +59,10 @@ GEOMETRIA_SKF_6205_DEFAULT = dict(
 )
 
 FRECUENCIA_MAXIMA_ESPECTRO_CRUDO = 5000
+
+# Ventana que lee el reporte: la misma que usan los reportes de la aplicacion (reportes.py), para que el reporte de un
+# archivo de laboratorio sea comparable con el de una medicion real.
+DURACION_VENTANA_SEGUNDOS = 2.0
 
 
 def _calcular_espectro_crudo(señal, frecuencia_muestreo, frecuencia_maxima):
@@ -97,25 +108,14 @@ async def inspeccionar_mat_endpoint(archivo: UploadFile = File(...)):
     return {"variables": variables, "sugerencias": sugerir_lectura(variables)}
 
 
-@router.post("/analizar-mat")
-async def analizar_mat(
-    archivo: UploadFile = File(...),
-    frecuencia_muestreo: Optional[int] = Form(None),
-    variable_frecuencia_muestreo: Optional[str] = Form(None),
-    variable_señal: Optional[str] = Form(None),
-    variable_rpm: Optional[str] = Form(None),
-    unidad_variable_rpm: str = Form("rpm"),
-    rpm: Optional[float] = Form(None),
-    numero_elementos_rodantes: int = Form(GEOMETRIA_SKF_6205_DEFAULT["numero_elementos_rodantes"]),
-    diametro_elemento_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_elemento_mm"]),
-    diametro_paso_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_paso_mm"]),
-    angulo_contacto_grados: float = Form(GEOMETRIA_SKF_6205_DEFAULT["angulo_contacto_grados"]),
+def _resolver_lectura(
+    contenido, frecuencia_muestreo, variable_frecuencia_muestreo, variable_señal, variable_rpm, unidad_variable_rpm, rpm
 ):
-    if not archivo.filename.lower().endswith(".mat"):
-        raise HTTPException(status_code=422, detail="El archivo debe ser un .mat")
-
-    contenido = await archivo.read()
-
+    """
+    Lee un .mat y resuelve la señal, la frecuencia de muestreo y la velocidad de giro segun lo que indico quien lo
+    sube (o lo que el archivo declara). Lo comparten /analizar-mat y /reporte-mat para que ambos usen exactamente lo
+    mismo. Lanza HTTPException 422 si falta algun dato.
+    """
     if unidad_variable_rpm not in ("rpm", "hz"):
         raise HTTPException(status_code=422, detail="La unidad de la variable de velocidad debe ser 'rpm' o 'hz'.")
 
@@ -175,6 +175,42 @@ async def analizar_mat(
             "variable correcta) y tampoco se indicó uno manualmente.",
         )
 
+    return {
+        "señal": señal,
+        "frecuencia_muestreo": frecuencia_muestreo,
+        "origen_frecuencia_muestreo": origen_frecuencia_muestreo,
+        "rpm": rpm_final,
+        "variable_señal": nombre_variable_señal,
+    }
+
+
+@router.post("/analizar-mat")
+async def analizar_mat(
+    archivo: UploadFile = File(...),
+    frecuencia_muestreo: Optional[int] = Form(None),
+    variable_frecuencia_muestreo: Optional[str] = Form(None),
+    variable_señal: Optional[str] = Form(None),
+    variable_rpm: Optional[str] = Form(None),
+    unidad_variable_rpm: str = Form("rpm"),
+    rpm: Optional[float] = Form(None),
+    numero_elementos_rodantes: int = Form(GEOMETRIA_SKF_6205_DEFAULT["numero_elementos_rodantes"]),
+    diametro_elemento_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_elemento_mm"]),
+    diametro_paso_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_paso_mm"]),
+    angulo_contacto_grados: float = Form(GEOMETRIA_SKF_6205_DEFAULT["angulo_contacto_grados"]),
+):
+    if not archivo.filename.lower().endswith(".mat"):
+        raise HTTPException(status_code=422, detail="El archivo debe ser un .mat")
+
+    contenido = await archivo.read()
+    lectura = _resolver_lectura(
+        contenido, frecuencia_muestreo, variable_frecuencia_muestreo, variable_señal, variable_rpm, unidad_variable_rpm, rpm
+    )
+    señal = lectura["señal"]
+    frecuencia_muestreo = lectura["frecuencia_muestreo"]
+    rpm_final = lectura["rpm"]
+    origen_frecuencia_muestreo = lectura["origen_frecuencia_muestreo"]
+    nombre_variable_señal = lectura["variable_señal"]
+
     rodamiento = SimpleNamespace(
         numero_elementos_rodantes=numero_elementos_rodantes,
         diametro_elemento_mm=diametro_elemento_mm,
@@ -201,3 +237,98 @@ async def analizar_mat(
         "hipotesis": hipotesis,
         "grafico": serializar_datos_grafico(datos_grafico) if datos_grafico else None,
     }
+
+
+@router.post("/reporte-mat")
+async def reporte_mat(
+    archivo: UploadFile = File(...),
+    frecuencia_muestreo: Optional[int] = Form(None),
+    variable_frecuencia_muestreo: Optional[str] = Form(None),
+    variable_señal: Optional[str] = Form(None),
+    variable_rpm: Optional[str] = Form(None),
+    unidad_variable_rpm: str = Form("rpm"),
+    rpm: Optional[float] = Form(None),
+    numero_elementos_rodantes: int = Form(GEOMETRIA_SKF_6205_DEFAULT["numero_elementos_rodantes"]),
+    diametro_elemento_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_elemento_mm"]),
+    diametro_paso_mm: float = Form(GEOMETRIA_SKF_6205_DEFAULT["diametro_paso_mm"]),
+    angulo_contacto_grados: float = Form(GEOMETRIA_SKF_6205_DEFAULT["angulo_contacto_grados"]),
+    con_ia: bool = Form(False),
+):
+    """
+    PDF de diagnostico de un archivo .mat de laboratorio: el mismo reporte que genera la aplicacion para un equipo
+    (primeros 2 s de la señal, reglas de rotor y de rodamientos, graficos), con la opcion de agregar la pagina
+    "Resumen redactado por IA". Como el resto de Laboratorio, no guarda nada: ni en la base de datos ni en disco; el PDF
+    se devuelve en la respuesta. Un fallo de la IA no impide el reporte: sale sin esa pagina y se avisa en el
+    encabezado X-Aviso-IA (texto codificado con URL).
+    """
+    if not archivo.filename.lower().endswith(".mat"):
+        raise HTTPException(status_code=422, detail="El archivo debe ser un .mat")
+
+    contenido = await archivo.read()
+    lectura = _resolver_lectura(
+        contenido, frecuencia_muestreo, variable_frecuencia_muestreo, variable_señal, variable_rpm, unidad_variable_rpm, rpm
+    )
+    frecuencia_muestreo = lectura["frecuencia_muestreo"]
+    rpm_final = lectura["rpm"]
+
+    rodamiento = SimpleNamespace(
+        codigo="Laboratorio",
+        numero_elementos_rodantes=numero_elementos_rodantes,
+        diametro_elemento_mm=diametro_elemento_mm,
+        diametro_paso_mm=diametro_paso_mm,
+        angulo_contacto_grados=angulo_contacto_grados,
+    )
+    ventana = lectura["señal"][: max(2, round(frecuencia_muestreo * DURACION_VENTANA_SEGUNDOS))]
+    datos_crudos = pd.DataFrame({"vibracion_x": ventana})
+    datos_fft = calcular_fft(datos=datos_crudos, frecuencia_muestreo=frecuencia_muestreo, frecuencia_maxima=300)
+    diagnostico = diagnosticar_sensor(
+        datos_fft,
+        rpm_final,
+        datos_crudos=datos_crudos,
+        frecuencia_muestreo=frecuencia_muestreo,
+        rodamiento=rodamiento,
+        potencia_kw=None,
+        tipo_soporte=None,
+        unidad_señal=None,
+        orientacion_ejes=None,
+        linea_base=None,
+        rpm_real=rpm_final,
+    )
+    grafico_crudo = diagnostico.pop("datos_grafico_rodamiento", None)
+
+    reporte = {
+        "equipo": {
+            "nombre": f"Archivo de laboratorio: {archivo.filename}",
+            "tipo": "Archivo externo (Laboratorio)",
+            "planta": "Laboratorio",
+            "rpm_nominal": rpm_final,
+        },
+        "fecha_generacion": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "sensores": [
+            {
+                "sensor_id": 1,
+                "nombre_tipo": f"Señal «{lectura['variable_señal']}» del archivo ({frecuencia_muestreo} muestras por segundo)",
+                "tiene_medicion": True,
+                "diagnostico": diagnostico,
+                "datos_fft": datos_fft,
+            }
+        ],
+    }
+
+    aviso_ia = None
+    if con_ia:
+        try:
+            reporte["resumen_ia"] = redactar_resumen(reporte)
+        except ErrorIA as error:
+            aviso_ia = str(error)
+
+    pdf = generar_pdf_reporte(reporte, {1: grafico_crudo} if grafico_crudo is not None else {})
+
+    nombre_pdf = "reporte_" + re.sub(r"[^A-Za-z0-9_.-]", "_", archivo.filename.rsplit(".", 1)[0]) + ".pdf"
+    encabezados = {
+        "Content-Disposition": f'attachment; filename="{nombre_pdf}"',
+        "X-Con-IA": "1" if reporte.get("resumen_ia") else "0",
+    }
+    if aviso_ia:
+        encabezados["X-Aviso-IA"] = quote(aviso_ia)
+    return Response(content=pdf, media_type="application/pdf", headers=encabezados)

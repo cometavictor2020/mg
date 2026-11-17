@@ -1,0 +1,94 @@
+Validacion de desbalanceo y desalineacion con MAFAULDA (ventana de 2 s, velocidad del tacometro, linea base del normal mas cercano)
+
+Archivos evaluados: 579 (calibracion: 18, reserva: 561)
+Cada celda: % de archivos con esa hipotesis en confianza >= 0,70 (diagnostico principal). N entre parentesis.
+
+== Escenario: antes
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47          15 %      6 %      0 %           64 %  0.16
+desbalanceo                      10g   46          83 %     52 %      0 %            9 %  0.09
+desbalanceo                      15g   47          87 %     57 %      0 %            6 %  0.08
+desbalanceo                      20g   48          88 %     62 %      0 %            4 %  0.07
+desbalanceo                      25g   45          89 %     80 %      0 %            4 %  0.08
+desbalanceo                      30g   45          89 %     80 %      0 %            2 %  0.08
+desbalanceo                      35g   43          91 %     84 %      0 %            5 %  0.07
+desbalanceo                       6g   48          81 %     42 %      0 %           19 %  0.11
+desalineacion_horizontal       0.5mm   49           6 %      2 %      0 %           71 %  0.13
+desalineacion_horizontal       1.0mm   47           6 %      0 %      0 %           77 %  0.14
+desalineacion_horizontal       1.5mm   48           4 %      4 %      0 %           54 %  0.20
+desalineacion_horizontal       2.0mm   48          15 %      8 %      0 %           35 %  0.22
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desbalanceo                      10g    2         100 %    100 %      0 %            0 %  0.09
+desbalanceo                      15g    1         100 %    100 %      0 %            0 %  0.09
+desbalanceo                      20g    1         100 %    100 %      0 %            0 %  0.06
+desbalanceo                      25g    2         100 %    100 %      0 %            0 %  0.05
+desbalanceo                      30g    2         100 %    100 %      0 %            0 %  0.06
+desbalanceo                      35g    2         100 %    100 %      0 %            0 %  0.04
+desbalanceo                       6g    1         100 %    100 %      0 %            0 %  0.06
+desalineacion_horizontal       0.5mm    1           0 %      0 %      0 %            0 %  0.10
+desalineacion_horizontal       1.0mm    2           0 %      0 %      0 %          100 %  0.14
+desalineacion_horizontal       1.5mm    1           0 %      0 %      0 %            0 %  0.36
+desalineacion_horizontal       2.0mm    1           0 %      0 %      0 %            0 %  0.23
+
+== Escenario: solo_relacion
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47          15 %      2 %      0 %           64 %  0.16
+desbalanceo                      10g   46          83 %      2 %      0 %            9 %  0.09
+desbalanceo                      15g   47          87 %      0 %      0 %            6 %  0.08
+desbalanceo                      20g   48          88 %      2 %      0 %            4 %  0.07
+desbalanceo                      25g   45          89 %      2 %      0 %            4 %  0.08
+desbalanceo                      30g   45          89 %      4 %      0 %            2 %  0.08
+desbalanceo                      35g   43          91 %      2 %      0 %            5 %  0.07
+desbalanceo                       6g   48          81 %      0 %      0 %           19 %  0.11
+desalineacion_horizontal       0.5mm   49           6 %      0 %      0 %           71 %  0.13
+desalineacion_horizontal       1.0mm   47           6 %      0 %      0 %           77 %  0.14
+desalineacion_horizontal       1.5mm   48           4 %      4 %      0 %           54 %  0.20
+desalineacion_horizontal       2.0mm   48          15 %      0 %      0 %           35 %  0.22
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desbalanceo                      10g    2         100 %      0 %      0 %            0 %  0.09
+desbalanceo                      15g    1         100 %      0 %      0 %            0 %  0.09
+desbalanceo                      20g    1         100 %      0 %      0 %            0 %  0.06
+desbalanceo                      25g    2         100 %      0 %      0 %            0 %  0.05
+desbalanceo                      30g    2         100 %      0 %      0 %            0 %  0.06
+desbalanceo                      35g    2         100 %      0 %      0 %            0 %  0.04
+desbalanceo                       6g    1         100 %      0 %      0 %            0 %  0.06
+desalineacion_horizontal       0.5mm    1           0 %      0 %      0 %            0 %  0.10
+desalineacion_horizontal       1.0mm    2           0 %      0 %      0 %          100 %  0.14
+desalineacion_horizontal       1.5mm    1           0 %      0 %      0 %            0 %  0.36
+desalineacion_horizontal       2.0mm    1           0 %      0 %      0 %            0 %  0.23
+
+== Escenario: relacion_y_ejes
+-- reserva
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -   47           0 %      2 %     13 %           83 %  0.16
+desbalanceo                      10g   46          48 %      4 %     65 %           15 %  0.09
+desbalanceo                      15g   47          60 %      0 %     81 %           13 %  0.08
+desbalanceo                      20g   48          69 %      2 %     79 %           12 %  0.07
+desbalanceo                      25g   45          73 %      2 %     69 %           11 %  0.08
+desbalanceo                      30g   45          71 %      7 %     71 %            9 %  0.08
+desbalanceo                      35g   43          72 %      5 %     79 %            7 %  0.07
+desbalanceo                       6g   48          33 %      0 %     48 %           19 %  0.11
+desalineacion_horizontal       0.5mm   49           0 %      2 %      4 %           90 %  0.13
+desalineacion_horizontal       1.0mm   47           2 %      4 %      2 %           85 %  0.14
+desalineacion_horizontal       1.5mm   48           0 %      8 %      4 %           69 %  0.20
+desalineacion_horizontal       2.0mm   48           4 %     19 %     10 %           67 %  0.22
+-- calibracion
+condicion                  severidad    N   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal                             -    2           0 %      0 %      0 %          100 %  0.17
+desbalanceo                      10g    2         100 %      0 %    100 %            0 %  0.09
+desbalanceo                      15g    1         100 %      0 %    100 %            0 %  0.09
+desbalanceo                      20g    1         100 %      0 %    100 %            0 %  0.06
+desbalanceo                      25g    2         100 %      0 %    100 %            0 %  0.05
+desbalanceo                      30g    2         100 %      0 %    100 %            0 %  0.06
+desbalanceo                      35g    2         100 %      0 %    100 %            0 %  0.04
+desbalanceo                       6g    1           0 %      0 %    100 %            0 %  0.06
+desalineacion_horizontal       0.5mm    1           0 %      0 %      0 %          100 %  0.10
+desalineacion_horizontal       1.0mm    2           0 %      0 %      0 %          100 %  0.14
+desalineacion_horizontal       1.5mm    1           0 %      0 %      0 %            0 %  0.36
+desalineacion_horizontal       2.0mm    1           0 %      0 %      0 %          100 %  0.23

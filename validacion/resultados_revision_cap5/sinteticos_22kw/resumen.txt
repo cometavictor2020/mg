@@ -1,0 +1,87 @@
+Desalineacion sintetica (motor 22 kW / 30 HP, 4 polos, 50 Hz, acoplamiento flexible; registros de 4 s a 12,8 kHz) pasada por el motor actual
+Registros por caso y condicion: 20. Linea base: registro sano de la misma condicion de carga.
+Cada fila: % de registros cuyo diagnostico principal (mayor confianza >= 0,70) cae en cada resultado, y confianza media de cada falla.
+Lo correcto: sano -> ninguna; desbalanceo -> desbalanceo; cualquier desalineacion -> desalineacion.
+
+== carga_75 | con_orientacion | sensor 1
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                           100%       0%       0%       0%             0.00   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.00
+desalineacion_paralela           0%       0%     100%       0%             0.66   0.94    0.54
+desalineacion_angular            0%       0%     100%       0%             0.00   1.00    1.00
+desalineacion_combinada          0%       0%     100%       0%             0.03   1.00    1.00
+
+== carga_75 | con_orientacion | sensor 2
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                           100%       0%       0%       0%             0.00   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.00
+desalineacion_paralela           0%       0%     100%       0%             0.50   0.88    0.36
+desalineacion_angular            5%       0%      95%       0%             0.00   0.97    0.95
+desalineacion_combinada          0%       0%     100%       0%             0.00   1.00    1.00
+
+== carga_75 | sin_orientacion | sensor 1
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                           100%       0%       0%       0%             0.00   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.50
+desalineacion_paralela          20%       0%      80%       0%             0.60   0.92    0.50
+desalineacion_angular            0%       0%     100%       0%             0.75   1.00    0.50
+desalineacion_combinada          0%       0%     100%       0%             0.75   1.00    0.50
+
+== carga_75 | sin_orientacion | sensor 2
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                           100%       0%       0%       0%             0.00   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.50
+desalineacion_paralela          40%       0%      60%       0%             0.45   0.84    0.50
+desalineacion_angular            5%       0%      95%       0%             0.71   0.98    0.50
+desalineacion_combinada          0%       0%     100%       0%             0.75   1.00    0.50
+
+== vacio | con_orientacion | sensor 1
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                            90%      10%       0%       0%             0.10   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.06
+desalineacion_paralela           0%       0%     100%       0%             0.58   0.91    0.42
+desalineacion_angular            0%       0%     100%       0%             0.00   0.99    1.00
+desalineacion_combinada          0%       0%     100%       0%             0.00   0.99    0.95
+
+== vacio | con_orientacion | sensor 2
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                            95%       5%       0%       0%             0.05   0.00    0.00
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.00
+desalineacion_paralela           0%       0%     100%       0%             0.58   0.91    0.40
+desalineacion_angular            0%       0%     100%       0%             0.00   0.96    1.00
+desalineacion_combinada          0%       0%     100%       0%             0.00   1.00    1.00
+
+== vacio | sin_orientacion | sensor 1
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                            90%      10%       0%       0%             0.10   0.00    0.05
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.50
+desalineacion_paralela          30%       0%      70%       0%             0.53   0.88    0.50
+desalineacion_angular            0%       0%     100%       0%             0.75   1.00    0.50
+desalineacion_combinada          5%       0%      95%       0%             0.71   0.98    0.50
+
+== vacio | sin_orientacion | sensor 2
+caso                        ninguna  desbal. desalin.  empate   conf. media: desbal. paral. angular
+sano                            95%       5%       0%       0%             0.05   0.00    0.03
+desbalanceo                      0%     100%       0%       0%             1.00   0.00    0.50
+desalineacion_paralela          30%       0%      70%       0%             0.53   0.88    0.50
+desalineacion_angular            0%       0%     100%       0%             0.75   1.00    0.50
+desalineacion_combinada          0%       0%     100%       0%             0.75   1.00    0.50
+
+Desbalanceo residual inyectado en los registros de desalineacion: 4.1 a 10.0 % de la mayor amplitud
+Velocidad: verdadera vs usada por el motor (error absoluto maximo): 2.0 r/min
+Zona ISO 20816-3 (conteo): {'C': 362, 'B': 342, 'D': 96}
+
+Ejemplo, desalineacion combinada, vacio, sin_orientacion, sensor 1, primer registro:
+  desalineacion_paralela 1.00: pico significativo en 2x, elevado respecto de 1x (razón 3.01); pico significativo en 1x
+  desbalanceo 0.75: pico significativo en 1x
+  desalineacion_angular 0.50: pico significativo en 1x; pico significativo en 2x
+Ejemplo, desalineacion combinada, vacio, con_orientacion, sensor 1, primer registro:
+  desalineacion_paralela 1.00: pico significativo en 2x, elevado respecto de 1x (razón 3.01); pico significativo en 1x; vibración radial elevada en 2x
+  desalineacion_angular 1.00: pico significativo en 1x; pico significativo en 2x; vibración axial elevada en 1x
+Ejemplo, desalineacion combinada, carga_75, sin_orientacion, sensor 1, primer registro:
+  desalineacion_paralela 1.00: pico significativo en 2x, elevado respecto de 1x (razón 3.42); pico significativo en 1x
+  desbalanceo 0.75: pico significativo en 1x
+  desalineacion_angular 0.50: pico significativo en 1x; pico significativo en 2x
+Ejemplo, desalineacion combinada, carga_75, con_orientacion, sensor 1, primer registro:
+  desalineacion_paralela 1.00: pico significativo en 2x, elevado respecto de 1x (razón 3.42); pico significativo en 1x; vibración radial elevada en 2x
+  desalineacion_angular 1.00: pico significativo en 1x; pico significativo en 2x; vibración axial elevada en 1x

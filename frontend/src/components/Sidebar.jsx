@@ -13,20 +13,6 @@ function IconoResumen() {
   )
 }
 
-function IconoAlertas() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path
-        d="M8 1.5c-2.2 0-3.5 1.7-3.5 4v1.8c0 .7-.3 1.4-.8 1.9L3 10.5h10l-.7-1.3c-.5-.5-.8-1.2-.8-1.9V5.5c0-2.3-1.3-4-3.5-4Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path d="M6.3 13a1.8 1.8 0 0 0 3.4 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function IconoReportes() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -102,19 +88,6 @@ function Sidebar({
               <IconoResumen />
             </span>
             Resumen General
-          </span>
-        </button>
-
-        <button type="button">
-          <span className="nav-item-grupo">
-            <span className="nav-item-icono">
-              <IconoAlertas />
-            </span>
-            Alertas
-          </span>
-
-          <span className="contador-alertas">
-            {dashboardDemo.navegacion.cantidadAlertas}
           </span>
         </button>
 

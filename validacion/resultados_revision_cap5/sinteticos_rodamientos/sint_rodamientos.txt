@@ -1,0 +1,32 @@
+Confianza minima considerada: 0.50. Ensayos por celda: 40 (x 2 rodamientos x 2 velocidades en cada fila).
+
+### Falsa alarma (sin falla; lineas de eje y de red presentes)
+- alguna hipotesis de rodamiento >= 0.50: 0/160 = 0 %
+- BPFO: 0/160 = 0 %
+- BPFI: 0/160 = 0 %
+- BSF: 0/160 = 0 %
+- FTF: 0/160 = 0 %
+
+### Sensibilidad: fraccion de ensayos con la falla correcta (fila: falla real; columna: severidad)
+| falla real | sev 0.5 | sev 1 | sev 2 | sev 4 |
+|---|---|---|---|---|
+| BPFO | 4 % | 100 % | 100 % | 100 % |
+| BPFI | 0 % | 68 % | 100 % | 100 % |
+| BSF | 0 % | 4 % | 100 % | 100 % |
+| FTF | 0 % | 0 % | 26 % | 48 % |
+
+### Especificidad: fraccion de ensayos con ALGUNA otra hipotesis de rodamiento ademas de la correcta
+| falla real | sev 0.5 | sev 1 | sev 2 | sev 4 |
+|---|---|---|---|---|
+| BPFO | 0 % | 0 % | 0 % | 0 % |
+| BPFI | 0 % | 0 % | 0 % | 0 % |
+| BSF | 0 % | 0 % | 0 % | 1 % |
+| FTF | 0 % | 0 % | 10 % | 61 % |
+
+### Doble falla (pista exterior + interior a la vez)
+| severidad | solo BPFO | solo BPFI | las dos | ninguna |
+|---|---|---|---|---|
+| 0.5 | 1 % | 0 % | 0 % | 99 % |
+| 1 | 69 % | 0 % | 31 % | 0 % |
+| 2 | 0 % | 0 % | 100 % | 0 % |
+| 4 | 0 % | 0 % | 100 % | 0 % |

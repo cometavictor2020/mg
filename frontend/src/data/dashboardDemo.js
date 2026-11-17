@@ -11,10 +11,6 @@ export const dashboardDemo = {
     rol: "Administrador",
   },
 
-  navegacion: {
-    cantidadAlertas: 3,
-  },
-
   estadoTiempoReal: {
     activo: true,
     texto: "EN VIVO",

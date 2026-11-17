@@ -1,0 +1,81 @@
+REPRODUCCION DE LAS FIGURAS 2, 6, 7, 9 Y 13 DEL PAPER DE TYAGI Y PANIGRAHI (2017)
+Motor: criterios_proyecto.yaml v1.0.0; frecuencia de muestreo 48000 Hz
+
+=== 1. LECTURA Y DIAGNOSTICO DEL MOTOR ===
+("completa" = señal entera, como la analiza la pantalla Laboratorio; "2 s" = ventanas de 2 s, como una medicion en la aplicacion)
+
+135.mat — pista exterior 7 mils (caso 1 del paper)
+  lectura: variable X135_DE_time, 243538 muestras = 5.07 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: pista_exterior 1.00
+  diagnostico 2 s, ventana 0: pista_exterior 1.00
+  diagnostico 2 s, ventana 1: pista_exterior 1.00
+  esperado: pista_exterior -> coincide
+
+109.mat — pista interior 7 mils (caso 13 del paper)
+  lectura: variable X109_DE_time, 243938 muestras = 5.08 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: pista_interior 1.00
+  diagnostico 2 s, ventana 0: pista_interior 1.00
+  diagnostico 2 s, ventana 1: pista_interior 1.00
+  esperado: pista_interior -> coincide
+
+122.mat — elemento rodante 7 mils (caso 25 del paper)
+  lectura: variable X122_DE_time, 244739 muestras = 5.10 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: (ninguna)
+  diagnostico 2 s, ventana 0: (ninguna)
+  diagnostico 2 s, ventana 1: (ninguna)
+  esperado: elemento_rodante -> NO coincide
+
+238.mat — pista exterior 21 mils (caso 9 del paper)
+  lectura: variable X238_DE_time, 246342 muestras = 5.13 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: pista_exterior 1.00
+  diagnostico 2 s, ventana 0: pista_exterior 1.00
+  diagnostico 2 s, ventana 1: pista_exterior 1.00
+  esperado: pista_exterior -> coincide
+
+213.mat — pista interior 21 mils (caso 21 del paper)
+  lectura: variable X213_DE_time, 244339 muestras = 5.09 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: pista_interior 1.00
+  diagnostico 2 s, ventana 0: pista_interior 1.00
+  diagnostico 2 s, ventana 1: pista_interior 1.00
+  esperado: pista_interior -> coincide
+
+226.mat — elemento rodante 21 mils (caso 33 del paper)
+  lectura: variable X226_DE_time, 243938 muestras = 5.08 s a 48000 Hz, velocidad declarada 1797 r/min
+  diagnostico completa: (ninguna)
+  diagnostico 2 s, ventana 0: (ninguna)
+  diagnostico 2 s, ventana 1: (ninguna)
+  esperado: elemento_rodante -> NO coincide
+
+97.mat — sano (0 hp)
+  lectura: variable X097_DE_time, 243938 muestras = 5.08 s a 48000 Hz, velocidad declarada 1796 r/min
+  diagnostico completa: (ninguna)
+  diagnostico 2 s, ventana 0: (ninguna)
+  diagnostico 2 s, ventana 1: (ninguna)
+  esperado: sano (sin hipotesis) -> coincide
+
+=== 2. FIGURAS 2 Y 9: ESPECTRO SIN ENVOLVENTE FRENTE A ENVOLVENTE (señal completa) ===
+amplitud en la frecuencia de falla, en g; el paper reporta para el caso 1: crudo 0,0012, envolvente 1,1081 (923 veces)
+archivo  falla   f [Hz]     crudo  envolvente  veces    PMR   paper (fig. 10, aprox.)
+135.mat  BPFO     107.3   0.00116      1.0986    949  135.3   caso 1: 923
+109.mat  BPFI     162.1   0.01749      0.2404     14   75.6   caso 13: ~110
+122.mat  BPFR     141.1   0.00050      0.0059     12    3.6   caso 25: ~14
+238.mat  BPFO     107.3   0.00069      0.4022    586   51.4   caso 9: ~600
+213.mat  BPFI     162.1   0.01265      0.3016     24   57.6   caso 21: ~150
+226.mat  BPFR     141.2   0.00045      0.0141     31    3.0   caso 33: 108
+
+=== 3. FIGURAS 6 Y 7: ENVOLVENTE SEGUN LA BANDA DE FILTRO (135.mat, BPFO) ===
+paper (fig. 7, valores leidos del grafico): resonancia 1 ~0.84 g, resonancia 2 ~0.41 g, PSO 1.108 g
+las bandas se leyeron de los rectangulos de la figura 6, asi que son aproximadas
+  sin filtrar:                                        1.0986 g   PMR 135.3
+  resonancia 1 (3300-3600 Hz)                        0.8495 g   PMR 179.3
+  resonancia 2 (2650-3000 Hz)                        0.4467 g   PMR 137.5
+  PSO del paper (centro 2584, ancho 832)             0.4916 g   PMR 117.0
+  (PSO omitido; usa --pso para optimizar la ventana, tarda varios minutos)
+
+=== 4. FIGURA 13: AMPLITUD DEL PICO DE FALLA SEGUN EL TAMAÑO (envolvente sin filtrar, 0 hp) ===
+paper: en pista exterior el pico baja al aumentar la falla; en pista interior y elemento rodante sube
+falla                 7 mils   21 mils   tendencia
+pista_exterior        1.0986    0.4022   baja (coincide con el paper)
+pista_interior        0.2404    0.3016   sube (coincide con el paper)
+elemento_rodante      0.0059    0.0141   sube (coincide con el paper)
+(la carpeta de datos no incluye los archivos de 14 mils que tambien muestra la figura 13)

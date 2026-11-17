@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
 
 import GraficoEnvolvente from "../components/GraficoEnvolvente"
+import InterruptorIA from "../components/InterruptorIA"
 import Sidebar from "../components/Sidebar"
 import { useEquiposReales } from "../hooks/useEquiposReales"
+import { useEstadoIA } from "../hooks/useEstadoIA"
 import { apiFetch } from "../utils/apiFetch"
 
 const URL_BASE = "http://127.0.0.1:8000"
@@ -234,6 +236,10 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
   const [mensaje, setMensaje] = useState("")
   const [reporteActual, setReporteActual] = useState(null)
 
+  // Redaccion con IA (opcional): el backend informa si se puede usar (clave, modelo) y que se enviara.
+  const estadoIA = useEstadoIA()
+  const [conIA, setConIA] = useState(false)
+
   const [historial, setHistorial] = useState([])
   const [cargandoHistorial, setCargandoHistorial] = useState(true)
   const [seleccionados, setSeleccionados] = useState(new Set())
@@ -268,7 +274,7 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
       const respuesta = await apiFetch(`${URL_BASE}/api/reportes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ equipo_id: Number(equipoId) }),
+        body: JSON.stringify({ equipo_id: Number(equipoId), con_ia: conIA && Boolean(estadoIA?.listo) }),
       })
 
       if (!respuesta.ok) {
@@ -389,6 +395,8 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
                 </select>
               </div>
 
+              <InterruptorIA estadoIA={estadoIA} activado={conIA} onCambio={setConIA} deshabilitado={generando} />
+
               <div className="config-form-acciones">
                 <button type="submit" className="config-boton-primario" disabled={generando}>
                   {generando ? "Generando…" : "Generar reporte"}
@@ -436,6 +444,38 @@ function Reportes({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion, on
               {reporteActual.resultado.sensores.map((sensor) => (
                 <TarjetaSensor key={sensor.sensor_id} sensor={sensor} />
               ))}
+
+              {reporteActual.resultado.resumen_ia && (
+                <div className="reporte-resumen-ia">
+                  <h3>Resumen redactado por IA</h3>
+                  <p className="config-mensaje">
+                    Redactado con inteligencia artificial (modelo {reporteActual.resultado.resumen_ia.modelo}). No
+                    modifica el diagnóstico ni las cifras; debe revisarlo el analista.
+                  </p>
+                  {reporteActual.resultado.resumen_ia.resumen
+                    .split("\n")
+                    .filter((parrafo) => parrafo.trim())
+                    .map((parrafo, indice) => (
+                      <p key={indice}>{parrafo}</p>
+                    ))}
+                  <h4>Observaciones de la IA</h4>
+                  {reporteActual.resultado.resumen_ia.observaciones.length > 0 ? (
+                    <ul>
+                      {reporteActual.resultado.resumen_ia.observaciones.map((observacion, indice) => (
+                        <li key={indice}>{observacion}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="config-mensaje">La IA no encontró aspectos que advertir.</p>
+                  )}
+                </div>
+              )}
+
+              {reporteActual.resultado.aviso_ia && (
+                <p className="config-error">
+                  El reporte se generó sin la página de IA: {reporteActual.resultado.aviso_ia}
+                </p>
+              )}
             </section>
           )}
 

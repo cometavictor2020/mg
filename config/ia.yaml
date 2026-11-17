@@ -1,0 +1,30 @@
+# Configuracion NO secreta de la redaccion de reportes con IA.
+# La clave de la API NO va aqui: va en .env como OPENAI_API_KEY (este archivo se sube a Git).
+#
+# Como funciona: al generar un reporte con el interruptor "Redactar con IA" encendido, se envian a OpenAI los
+# RESULTADOS del diagnostico (hipotesis, severidad, cambio respecto de la linea base, velocidad, limitaciones).
+# Nunca se envian las señales. La IA redacta un resumen y comenta el reporte; no cambia el diagnostico ni las cifras:
+# si el texto trae una cifra que no esta en los datos, se descarta y el reporte sale sin la pagina de IA.
+
+ia:
+  habilitado: true
+
+  proveedor: openai
+
+  # Modelo que se usa. CAMBIALO por el que tengas disponible en tu cuenta de OpenAI: este valor es solo un punto de
+  # partida y no se verifico que exista en tu cuenta. Si el modelo no existe, el reporte sale sin IA y avisa por que.
+  modelo: "gpt-4o-mini"
+
+  tiempo_maximo_segundos: 60
+
+  # false: la IA ve "Equipo" y "Planta" en vez de los nombres reales (el PDF si muestra los nombres reales).
+  enviar_nombres: false
+
+  # Largo del texto que se pide (la pagina del PDF es una sola).
+  maximo_palabras_resumen: 200
+  maximo_observaciones: 5
+  maximo_palabras_observacion: 35
+
+  # Cifras que el texto de la IA puede mencionar aunque no esten en los datos (numeros de normas, ordenes de
+  # armonicos 1x/2x/3x). Cualquier otra cifra debe salir de los datos del reporte.
+  cifras_permitidas: [20816, 13373, 1, 2, 3]

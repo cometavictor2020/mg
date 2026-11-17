@@ -1,0 +1,27 @@
+Validacion de desbalanceo y desalineacion con SRO (1 s por muestra, velocidad nominal declarada, linea base = primera corrida normal de cada velocidad)
+
+Cada celda: % de muestras con esa hipotesis en confianza >= 0,70. Ninguno de los umbrales del motor se ajusto con este dataset.
+
+== Escenario: sin_relacion
+-- 900 r/min, ubicacion 1
+condicion           N corridas   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal            379       19           0 %      0 %      0 %          100 %  0.00
+desbalanceo       400       20         100 %      0 %      0 %            0 %  0.00
+desalineacion     399       20           0 %      0 %      0 %           99 %  inf
+-- 900 r/min, ubicacion 2
+condicion           N corridas   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal            379       19           0 %      0 %      0 %          100 %  0.00
+desbalanceo       400       20         100 %      0 %      0 %            0 %  0.00
+desalineacion     399       20           0 %      0 %      0 %          100 %  0.00
+
+== Escenario: con_relacion
+-- 900 r/min, ubicacion 1
+condicion           N corridas   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal            379       19           0 %      0 %      0 %          100 %  0.00
+desbalanceo       400       20         100 %      0 %      0 %            0 %  0.00
+desalineacion     399       20           0 %      0 %      0 %           99 %  inf
+-- 900 r/min, ubicacion 2
+condicion           N corridas   desbalanceo  parale.  angular   ninguna>=0,3  razon 2x/1x (mediana)
+normal            379       19           0 %      0 %      0 %          100 %  0.00
+desbalanceo       400       20         100 %      0 %      0 %            0 %  0.00
+desalineacion     399       20           0 %      0 %      0 %          100 %  0.00

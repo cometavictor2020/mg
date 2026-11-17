@@ -12,7 +12,9 @@ import {
 
 import ComparacionPSO from "../components/ComparacionPSO"
 import GraficoEnvolvente from "../components/GraficoEnvolvente"
+import InterruptorIA from "../components/InterruptorIA"
 import Sidebar from "../components/Sidebar"
+import { useEstadoIA } from "../hooks/useEstadoIA"
 import { apiFetch } from "../utils/apiFetch"
 
 const URL_BASE = "http://127.0.0.1:8000"
@@ -157,6 +159,12 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
 
   const [analizando, setAnalizando] = useState(false)
   const [error, setError] = useState("")
+
+  // Reporte PDF del archivo (con redaccion de IA opcional)
+  const estadoIA = useEstadoIA()
+  const [conIA, setConIA] = useState(false)
+  const [generandoReporte, setGenerandoReporte] = useState(false)
+  const [mensajeReporte, setMensajeReporte] = useState("")
   const [resultado, setResultado] = useState(null)
 
   const [usarPso, setUsarPso] = useState(false)
@@ -307,23 +315,8 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
     }
   }
 
-  async function analizar(evento) {
-    evento.preventDefault()
-    setError("")
-    setResultado(null)
-    clearInterval(intervaloPsoRef.current)
-    setUsarPso(false)
-    setFrecuenciaObjetivoPso("")
-    setEjecutandoPso(false)
-    setProgresoPso(0)
-    setResultadoPso(null)
-    setErrorPso("")
-
-    if (!archivo) {
-      setError("Selecciona un archivo .mat.")
-      return
-    }
-
+  // Los mismos datos del formulario sirven para analizar y para generar el reporte.
+  function construirFormulario() {
     const formulario = new FormData()
     formulario.append("archivo", archivo)
     if (variableFrecuencia) {
@@ -341,6 +334,80 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
     formulario.append("diametro_elemento_mm", diametroElementoMm)
     formulario.append("diametro_paso_mm", diametroPasoMm)
     formulario.append("angulo_contacto_grados", anguloContactoGrados)
+    return formulario
+  }
+
+  // Descarga un PDF de diagnostico del archivo cargado. No guarda nada: ni en la base de datos ni en el servidor.
+  async function generarReporte() {
+    setError("")
+    setMensajeReporte("")
+
+    if (!archivo) {
+      setError("Selecciona un archivo .mat.")
+      return
+    }
+
+    const formulario = construirFormulario()
+    const pedirIA = conIA && Boolean(estadoIA?.listo)
+    formulario.append("con_ia", pedirIA ? "true" : "false")
+
+    setGenerandoReporte(true)
+    try {
+      const respuesta = await apiFetch(`${URL_BASE}/api/laboratorio/reporte-mat`, {
+        method: "POST",
+        body: formulario,
+      })
+
+      if (!respuesta.ok) {
+        const detalle = await respuesta.json().catch(() => null)
+        throw new Error(detalle?.detail ?? "No fue posible generar el reporte")
+      }
+
+      const aviso = respuesta.headers.get("X-Aviso-IA")
+      const conResumenIA = respuesta.headers.get("X-Con-IA") === "1"
+
+      const blob = await respuesta.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement("a")
+      enlace.href = url
+      enlace.download = `reporte_${archivo.name.replace(/\.mat$/i, "")}.pdf`
+      document.body.appendChild(enlace)
+      enlace.click()
+      enlace.remove()
+      URL.revokeObjectURL(url)
+
+      setMensajeReporte(
+        aviso
+          ? `Reporte descargado sin la página de IA: ${decodeURIComponent(aviso)}`
+          : conResumenIA
+            ? "Reporte descargado, con la página «Resumen redactado por IA». No se guardó nada en el sistema."
+            : "Reporte descargado. No se guardó nada en el sistema.",
+      )
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGenerandoReporte(false)
+    }
+  }
+
+  async function analizar(evento) {
+    evento.preventDefault()
+    setError("")
+    setResultado(null)
+    clearInterval(intervaloPsoRef.current)
+    setUsarPso(false)
+    setFrecuenciaObjetivoPso("")
+    setEjecutandoPso(false)
+    setProgresoPso(0)
+    setResultadoPso(null)
+    setErrorPso("")
+
+    if (!archivo) {
+      setError("Selecciona un archivo .mat.")
+      return
+    }
+
+    const formulario = construirFormulario()
 
     setAnalizando(true)
     try {
@@ -598,10 +665,27 @@ function Laboratorio({ sesion, onCerrarSesion, onIrAResumen, onIrAConfiguracion,
               </details>
 
               {error && <p className="config-error">{error}</p>}
+              {mensajeReporte && <p className="config-mensaje">{mensajeReporte}</p>}
+
+              <InterruptorIA
+                estadoIA={estadoIA}
+                activado={conIA}
+                onCambio={setConIA}
+                deshabilitado={generandoReporte}
+                sujeto="del archivo"
+              />
 
               <div className="config-form-acciones">
-                <button type="submit" className="config-boton-primario" disabled={analizando}>
+                <button type="submit" className="config-boton-primario" disabled={analizando || generandoReporte}>
                   {analizando ? "Analizando…" : "Analizar"}
+                </button>
+                <button
+                  type="button"
+                  className="config-boton-secundario"
+                  onClick={generarReporte}
+                  disabled={analizando || generandoReporte || !archivo}
+                >
+                  {generandoReporte ? "Generando reporte…" : "Generar reporte (PDF)"}
                 </button>
               </div>
             </form>
